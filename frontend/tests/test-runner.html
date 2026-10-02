@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECHODESK — Unit Test Runner</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: #151c2e;
+      --card-border: #232e48;
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --pass: #10b981;
+      --fail: #ef4444;
+      --accent: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      padding: 32px;
+      line-height: 1.6;
+    }
+    .header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 16px;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #fff;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .summary-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .summary-pass {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--pass);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .summary-fail {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--fail);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .suite-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+    .suite-header {
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--card-border);
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      color: var(--accent);
+    }
+    .test-row {
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      font-size: 14px;
+    }
+    .test-row:last-child { border-bottom: none; }
+    .status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 8px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .status-pass {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--pass);
+    }
+    .status-fail {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--fail);
+    }
+    .test-name {
+      flex: 1;
+      color: var(--text);
+    }
+    .test-time {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .error-box {
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(239, 68, 68, 0.1);
+      border-left: 3px solid var(--fail);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: #fca5a5;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="title">ECHODESK Verification Test Suite</div>
+      <div class="subtitle">Stage 1: Work Session State Machine Verification</div>
+    </div>
+    <div id="summary-badge" class="summary-badge summary-pass">Running tests...</div>
+  </div>
+
+  <div id="results-container"></div>
+
+  <!-- Core Scripts -->
+  <script src="../js/core/events.js"></script>
+  <script src="../js/core/storage.js"></script>
+  <script src="../js/core/session-state.js"></script>
+  <script src="../js/ai/ai-provider.js"></script>
+  <script src="../js/engines/privacy-gate.js"></script>
+  <script src="../js/engines/intent-engine.js"></script>
+  <script src="../js/engines/memory-engine.js"></script>
+  <script src="../js/engines/flow-engine.js"></script>
+  <script src="../js/engines/bridge-engine.js"></script>
+
+  <!-- Test Framework & Suites -->
+  <script src="./test-runner.js"></script>
+  <script src="./session-state.test.js"></script>
+  <script src="./zen-mode.test.js"></script>
+  <script src="./integration.test.js"></script>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      const results = await window.testRunner.run();
+      window.testResults = results;
+
+      const summaryBadge = document.getElementById('summary-badge');
+      const container = document.getElementById('results-container');
+
+      if (results.failed === 0) {
+        summaryBadge.className = 'summary-badge summary-pass';
+        summaryBadge.textContent = `PASS: ${results.passed} / ${results.total} Tests Passed`;
+      } else {
+        summaryBadge.className = 'summary-badge summary-fail';
+        summaryBadge.textContent = `FAIL: ${results.failed} Failed / ${results.passed} Passed (${results.total} Total)`;
+      }
+
+      container.innerHTML = '';
+      results.suites.forEach(suite => {
+        const card = document.createElement('div');
+        card.className = 'suite-card';
+
+        const header = document.createElement('div');
+        header.className = 'suite-header';
+        header.innerHTML = `<span>${suite.name}</span><span>${suite.passed}/${suite.tests.length} passed</span>`;
+        card.appendChild(header);
+
+        suite.tests.forEach(t => {
+          const row = document.createElement('div');
+          row.className = 'test-row';
+          row.innerHTML = `
+            <span class="status-pill ${t.passed ? 'status-pass' : 'status-fail'}">${t.passed ? 'PASS' : 'FAIL'}</span>
+            <div style="flex: 1;">
+              <div class="test-name">${t.name}</div>
+              ${t.error ? `<div class="error-box">${t.error}</div>` : ''}
+            </div>
+            <span class="test-time">${t.durationMs}ms</span>
+          `;
+          card.appendChild(row);
+        });
+
+        container.appendChild(card);
+      });
+    });
+  </script>
+</body>
+</html>

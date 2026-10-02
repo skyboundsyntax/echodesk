@@ -1,0 +1,19 @@
+{
+  "name": "echodesk-backend",
+  "version": "1.0.0",
+  "description": "ECHODESK Privacy-First AI Productivity Workspace Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "powershell.exe -ExecutionPolicy Bypass -File ./tests/run-backend-tests.ps1"
+  },
+  "keywords": [
+    "echodesk",
+    "jot",
+    "privacy-first",
+    "agent",
+    "zero-surveillance"
+  ],
+  "author": "ECHODESK Core Team",
+  "license": "Apache-2.0"
+}

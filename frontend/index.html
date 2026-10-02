@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ECHODESK — Powered by JOT | Privacy-First AI Workspace</title>
+  <meta name="description" content="Privacy-first AI productivity workspace powered by JOT. JOT your intent. Less managing. More doing. Zero passive surveillance.">
+
+  <!-- Typography: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="css/design-tokens.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/zen.css">
+  <link rel="stylesheet" href="css/privacy.css">
+  <link rel="stylesheet" href="css/bridge.css">
+</head>
+<body>
+
+  <!-- Top Application Navigation Bar -->
+  <header class="topbar">
+    <div class="brand-group">
+      <div class="brand-logo">E</div>
+      <div class="brand-text">
+        <span class="brand-name">ECHODESK</span>
+        <span class="brand-sub">Powered by <span>JOT</span></span>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" aria-label="Main Navigation">
+      <button class="nav-tab-btn active" data-view="jot">⚡ JOT Workspace</button>
+      <button class="nav-tab-btn" data-view="zen">🧘 Zen Focus</button>
+      <button class="nav-tab-btn" data-view="memory">🧠 Echo Memory</button>
+      <button class="nav-tab-btn" data-view="privacy">🛡️ ECHOSHIELD</button>
+      <button class="nav-tab-btn" data-view="bridge">📱 Device Bridge</button>
+    </nav>
+
+    <!-- Real-time Privacy & Sensor Indicators -->
+    <div class="status-indicators">
+      <div id="pill-sensor-mic" class="sensor-pill">
+        <span class="dot"></span>
+        <span class="pill-text">Mic: Push-to-Talk</span>
+      </div>
+      <div id="pill-sensor-cam" class="sensor-pill">
+        <span class="dot"></span>
+        <span class="pill-text">Cam: Off (Zen Only)</span>
+      </div>
+      <div class="sensor-pill strict-off" title="Strict non-negotiable policy: zero application or desktop inspection">
+        <span class="dot"></span>
+        <span>Monitoring: OFF</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace Container -->
+  <main class="app-container">
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: JOT WORKSPACE                      -->
+    <!-- ========================================== -->
+    <section id="view-jot" class="view-panel active">
+      
+      <!-- JOT Hero Intent Card -->
+      <div class="jot-hero-card">
+        <h1 class="jot-greeting">What are you working on?</h1>
+        <p class="jot-subtitle">Type, speak, or show JOT your intent. No manual task overhead.</p>
+
+        <div class="jot-input-wrapper">
+          <input type="text" id="jot-input" class="jot-text-input" placeholder="e.g. studying DBMS, pause, I stopped an hour ago..." autocomplete="off">
+          <div class="jot-actions-group">
+            <button id="jot-voice-btn" class="btn-icon" title="Push-to-Talk Voice Command (Zero raw audio stored)">
+              🎤 <span>Speak</span>
+            </button>
+            <button id="jot-send-btn" class="btn-primary">JOT Intent</button>
+          </div>
+        </div>
+
+        <!-- Quick Demo Intent Chips -->
+        <div class="quick-chips-row">
+          <span class="quick-chip-label">Quick Intent:</span>
+          <button class="quick-chip" data-input="Hey JOT, studying DBMS">“Hey JOT, studying DBMS”</button>
+          <button class="quick-chip" data-input="JOT, pause">“JOT, pause”</button>
+          <button class="quick-chip" data-input="JOT, I stopped an hour ago">“JOT, I stopped an hour ago”</button>
+          <button class="quick-chip" data-input="JOT, resume DBMS">“JOT, resume DBMS”</button>
+          <button class="quick-chip" data-input="JOT, continue DBMS on laptop">“JOT, continue DBMS on laptop”</button>
+          <button class="quick-chip" data-input="JOT, less reminders">“JOT, less reminders”</button>
+        </div>
+      </div>
+
+      <!-- Active Work Session Live Card -->
+      <div id="active-session-card" class="active-session-card" style="display: none;">
+        <div class="session-info">
+          <div class="session-badge-row">
+            <span id="session-state-badge" class="session-state-badge badge-active">ACTIVE</span>
+            <span id="flow-protected-tag" class="flow-protected-tag" style="display: none;">
+              ● Flow protected — JOT is staying quiet
+            </span>
+          </div>
+          <h2 id="session-context-title" class="session-context-title">DBMS</h2>
+          <div class="session-meta-breadcrumbs">
+            <span id="session-step-pill" class="step-pill">Q5</span>
+            <span id="session-topic-text">• Normalization</span>
+            <span style="color: var(--text-muted);">• Zero surveillance active</span>
+          </div>
+        </div>
+
+        <div class="session-timer-group">
+          <div id="session-timer-display" class="session-timer-display">00:00</div>
+          <div class="session-controls">
+            <button id="btn-session-pause" class="btn-ctrl">⏸ Pause</button>
+            <button id="btn-session-resume" class="btn-ctrl" style="display: none;">▶ Resume</button>
+            <button id="btn-session-stop" class="btn-ctrl">⏹ End</button>
+            <button id="btn-session-zen" class="btn-ctrl btn-ctrl-zen">🧘 Zen Mode</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- JOT Activity & Policy Verification Feed -->
+      <div class="feed-section-header">
+        <h3 class="feed-title">JOT Agent Stream & Policy Verification</h3>
+        <span style="font-size: 12px; color: var(--text-muted);">Non-bypassable Privacy Gate Active</span>
+      </div>
+      <div id="jot-feed-container" class="feed-timeline">
+        <!-- Initial Welcome Item -->
+        <div class="feed-card">
+          <div class="feed-icon">⚡</div>
+          <div class="feed-content">
+            <div class="feed-header">
+              <span class="feed-intent-name">ECHODESK Ready</span>
+              <span class="feed-time">Now</span>
+            </div>
+            <div class="feed-desc">JOT knows when to act, when to remember, and when to stay out of your way. Start by declaring your intent above.</div>
+            <span class="feed-policy-badge">✓ ECHOSHIELD Active</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: ZEN FOCUS MODE                     -->
+    <!-- ========================================== -->
+    <section id="view-zen" class="view-panel">
+      <div class="zen-container">
+        <div class="zen-ambient-aura"></div>
+
+        <div class="zen-content">
+          <h1 id="zen-context-title" class="zen-context-title">DBMS</h1>
+          <div id="zen-topic-tag" class="zen-topic-tag">Q5 — Normalization</div>
+
+          <div id="zen-timer-huge" class="zen-timer-huge">00:00</div>
+
+          <!-- Flow State Banner -->
+          <div id="zen-flow-banner" class="zen-flow-banner">
+            <span class="flow-dot"></span>
+            <span id="zen-flow-status-text">Flow protected — JOT is staying quiet</span>
+          </div>
+
+          <!-- Natural Pause Proposal Card (When absence detected) -->
+          <div id="zen-pause-card" class="zen-pause-card">
+            <div class="zen-pause-title">Possible Pause Detected</div>
+            <div class="zen-pause-desc">Looks like you stepped away. Pause DBMS?</div>
+            <div class="zen-pause-actions">
+              <button id="zen-pause-confirm-btn" class="zen-btn zen-btn-primary">Pause DBMS</button>
+              <button id="zen-pause-dismiss-btn" class="zen-btn">Keep Working</button>
+            </div>
+          </div>
+
+          <!-- Gentle Check-in Card -->
+          <div id="zen-checkin-card" class="zen-checkin-card">
+            <div id="zen-checkin-title" class="zen-checkin-title">💧 Quick Reset</div>
+            <div id="zen-checkin-desc" class="zen-checkin-desc">Grab some water before continuing.</div>
+            <div class="zen-pause-actions">
+              <button id="zen-checkin-accept-btn" class="zen-btn zen-btn-primary">Took Reset</button>
+              <button id="zen-checkin-dismiss-btn" class="zen-btn">Later</button>
+            </div>
+          </div>
+
+          <!-- Zen Controls -->
+          <div class="zen-controls-row">
+            <button id="zen-btn-pause" class="zen-btn">⏸ Pause Focus</button>
+            <button id="zen-btn-resume" class="zen-btn zen-btn-primary" style="display: none;">▶ Resume Focus</button>
+            <button id="zen-btn-stop" class="zen-btn">⏹ End Session</button>
+            <button id="zen-btn-exit" class="zen-btn">Workspace View</button>
+          </div>
+
+          <!-- Live Sensor Telemetry Strip (Local only, zero frames stored) -->
+          <div class="zen-sensor-status-bar">
+            <span id="zen-camera-status" class="zen-sensor-indicator on">
+              📷 Local Sensor: Active
+            </span>
+            <span id="zen-presence-indicator" class="zen-sensor-indicator on">
+              Presence: PRESENT (95%)
+            </span>
+            <span>🔒 Zero Video Uploaded</span>
+          </div>
+
+          <!-- Interactive Test Strip for Hackathon Demo -->
+          <div style="margin-top: 18px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+            <button id="demo-simulate-absence" class="quick-chip" style="background: rgba(236,72,153,0.1); border-color: rgba(236,72,153,0.3); color: #f472b6;">
+              🧪 Simulate User Stepped Away
+            </button>
+            <button id="demo-simulate-present" class="quick-chip" style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34d399;">
+              🧪 Simulate User Returned
+            </button>
+            <button id="demo-simulate-pomodoro" class="quick-chip" style="background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.3); color: #22d3ee;">
+              🧪 Simulate 25m Pomodoro Boundary
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: ECHO MEMORY CENTER                 -->
+    <!-- ========================================== -->
+    <section id="view-memory" class="view-panel">
+      <div class="privacy-header-card">
+        <div class="privacy-title-group">
+          <h2>🧠 Echo Memory Core</h2>
+          <p class="privacy-tagline">JOT remembers useful work context (topics, steps, durations) so you can resume instantly. Raw sensor data is never stored.</p>
+        </div>
+        <button id="btn-memory-clear-all" class="btn-danger">Clear All Memories</button>
+      </div>
+
+      <!-- Resumption Greeting Card -->
+      <div class="feed-card" style="margin-bottom: 20px; border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.05);">
+        <div class="feed-icon" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">✨</div>
+        <div class="feed-content">
+          <div class="feed-header">
+            <span class="feed-intent-name" style="color: #38bdf8;">Context Restoration on Return</span>
+            <span class="feed-time">Active Policy</span>
+          </div>
+          <div id="memory-resume-greeting" class="feed-desc" style="font-size: 15px; font-weight: 600; color: #fff;">
+            Welcome back. You were working on Q5 — Normalization.
+          </div>
+        </div>
+      </div>
+
+      <!-- Stored Memories Feed -->
+      <div id="memory-list-container" class="feed-timeline">
+        <!-- Rendered by MemoryController -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: ECHOSHIELD PRIVACY CENTER          -->
+    <!-- ========================================== -->
+    <section id="view-privacy" class="view-panel">
+      <div class="privacy-header-card">
+        <div class="privacy-title-group">
+          <h2>
+            🛡️ ECHOSHIELD Privacy Core
+            <span class="shield-badge">Zero Surveillance</span>
+          </h2>
+          <p class="privacy-tagline">AI that understands your work without watching your life. Every agent action is evaluated by code gates outside the LLM.</p>
+        </div>
+      </div>
+
+      <!-- 6 Privacy Settings Cards -->
+      <div class="privacy-grid">
+
+        <!-- 1. Microphone -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>🎤 Microphone Interaction</h3>
+              <p class="privacy-card-desc">Explicit push-to-talk only. Always-listening background audio is strictly prohibited.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="priv-toggle-mic" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <span style="font-size: 11px; color: #34d399;">✓ Scoped to push-to-talk button</span>
+        </div>
+
+        <!-- 2. Camera Assistance -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>📷 Camera Zen Assistance</h3>
+              <p class="privacy-card-desc">Local presence detection for Zen Mode only. No facial recognition or video streaming.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="priv-toggle-camera">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <span style="font-size: 11px; color: var(--text-secondary);">Minimal signal (present/absent) • Frame discarded</span>
+        </div>
+
+        <!-- 3. Local Sensing -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>⚡ Local-First Signal Processing</h3>
+              <p class="privacy-card-desc">Sensor data is processed entirely in your browser. Raw sensor frames never leave your device.</p>
+            </div>
+            <span class="shield-badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-color: rgba(56, 189, 248, 0.3);">
+              LOCAL ONLY
+            </span>
+          </div>
+          <span style="font-size: 11px; color: #38bdf8;">✓ Hard-isolated client pipeline</span>
+        </div>
+
+        <!-- 4. Cloud Reasoning -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>☁️ Cloud AI Reasoning</h3>
+              <p class="privacy-card-desc">Allows cloud LLMs (Gemini) for complex text intent parsing. Falls back to local deterministic engine offline.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="priv-toggle-cloud" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div style="display: flex; gap: 6px; margin-top: 6px;">
+            <input type="password" id="gemini-api-key-input" class="jot-text-input" placeholder="Optional: Gemini API Key" style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; font-size: 11px; border: 1px solid var(--border-subtle);">
+            <button id="btn-save-api-key" class="btn-ctrl" style="padding: 4px 8px; font-size: 11px;">Save</button>
+          </div>
+        </div>
+
+        <!-- 5. Raw Recording Retention -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>📼 Raw Audio/Video Storage</h3>
+              <p class="privacy-card-desc">Storing raw camera frames or mic audio in application logs or databases is strictly forbidden.</p>
+            </div>
+            <span class="privacy-lock-tag">🔒 STRICTLY OFF</span>
+          </div>
+          <span style="font-size: 11px; color: #f87171;">Non-negotiable architectural privacy rule</span>
+        </div>
+
+        <!-- 6. Laptop Monitoring -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>💻 Laptop App & Window Inspection</h3>
+              <p class="privacy-card-desc">Passive inspection of desktop apps, browser tabs, screenshots, or private files is strictly forbidden.</p>
+            </div>
+            <span class="privacy-lock-tag">🚫 STRICTLY DENIED</span>
+          </div>
+          <span style="font-size: 11px; color: #f87171;">Continuous desktop surveillance blocked</span>
+        </div>
+
+      </div>
+
+      <!-- Real-time ECHOSHIELD Policy Audit Log Table -->
+      <div class="audit-log-card">
+        <div class="audit-log-title">
+          <span>Live ECHOSHIELD Policy Gate Audit Trail</span>
+          <span style="font-size: 11px; color: var(--text-muted);">Real-time policy gate evaluations</span>
+        </div>
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Action Evaluated</th>
+              <th>Gate Decision</th>
+              <th>Enforcement Rationale</th>
+            </tr>
+          </thead>
+          <tbody id="privacy-audit-tbody">
+            <!-- Rendered by PrivacyController -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Nuclear Purge Action -->
+      <div class="danger-zone">
+        <div>
+          <h4 style="color: #f87171; font-size: 14px; margin-bottom: 2px;">Wipe All Data & Revoke Consents</h4>
+          <p style="font-size: 12px; color: var(--text-secondary);">Destroys all local session state, stored context memories, and reset privacy policies to default.</p>
+        </div>
+        <button id="btn-purge-all-data" class="btn-danger">Wipe Everything</button>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: CROSS-DEVICE BRIDGE                -->
+    <!-- ========================================== -->
+    <section id="view-bridge" class="view-panel">
+      <div class="bridge-header-card">
+        <h2>📱 Cross-Device Session Bridge</h2>
+        <p>Explicit continuity between your phone and laptop without background surveillance. Only structured session state crosses the bridge.</p>
+      </div>
+
+      <div class="bridge-layout">
+
+        <!-- Mobile Phone Device Container -->
+        <div class="device-mockup-card">
+          <div class="device-badge-row">
+            <div class="device-title">📱 Phone Workspace</div>
+            <span class="device-status">CONNECTED</span>
+          </div>
+
+          <div class="handoff-state-box">
+            <div id="bridge-phone-context" class="handoff-context-name">DBMS</div>
+            <div id="bridge-phone-meta" class="handoff-meta">Q5 — Normalization (ACTIVE)</div>
+            <div id="bridge-phone-timer" class="handoff-timer">00:00</div>
+          </div>
+
+          <button id="btn-initiate-handoff" class="handoff-action-btn">
+            Continue on Laptop →
+          </button>
+
+          <div class="bridge-policy-note">
+            <span>🛡️</span>
+            <span>Transfers structured session context only. No desktop inventory.</span>
+          </div>
+        </div>
+
+        <!-- Laptop Companion Container -->
+        <div class="device-mockup-card">
+          <div class="device-badge-row">
+            <div class="device-title">💻 Laptop Companion</div>
+            <span class="device-status">AUTHENTICATED</span>
+          </div>
+
+          <div id="bridge-laptop-box" class="handoff-state-box" style="display: none; border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.04);">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin-bottom: 4px;">
+              ⚡ JOT SESSION READY
+            </div>
+            <div id="bridge-laptop-context" class="handoff-context-name">DBMS</div>
+            <div id="bridge-laptop-meta" class="handoff-meta">Q5 — Normalization (Synced from phone)</div>
+            <div id="bridge-laptop-timer" class="handoff-timer">00:00</div>
+            
+            <button id="btn-laptop-resume" class="handoff-action-btn" style="margin-top: 14px; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);">
+              Continue DBMS on Laptop
+            </button>
+          </div>
+
+          <div id="bridge-laptop-empty" style="padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px;">
+            Awaiting explicit handoff from phone. Click "Continue on Laptop" on your mobile device to synchronize work state.
+          </div>
+
+          <div class="bridge-policy-note">
+            <span>🔒</span>
+            <span>Silent screen recording and browser tracking: STRICTLY DISABLED.</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Core Scripts in Dependency Order -->
+  <script src="js/core/events.js"></script>
+  <script src="js/core/storage.js"></script>
+  <script src="js/core/session-state.js"></script>
+  <script src="js/ai/ai-provider.js"></script>
+  <script src="js/engines/privacy-gate.js"></script>
+  <script src="js/engines/intent-engine.js"></script>
+  <script src="js/engines/memory-engine.js"></script>
+  <script src="js/engines/flow-engine.js"></script>
+  <script src="js/engines/bridge-engine.js"></script>
+  <script src="js/sensors/voice-input.js"></script>
+  <script src="js/sensors/camera-presence.js"></script>
+  <script src="js/ui/jot-controller.js"></script>
+  <script src="js/ui/zen-controller.js"></script>
+  <script src="js/ui/memory-controller.js"></script>
+  <script src="js/ui/privacy-controller.js"></script>
+  <script src="js/ui/bridge-controller.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
