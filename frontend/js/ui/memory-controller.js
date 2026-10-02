@@ -80,6 +80,7 @@ class MemoryController {
         </div>
         <div style="display: flex; gap: 8px;">
           <button class="btn-ctrl btn-resume-memory" data-context="${mem.contextName}">▶ Resume</button>
+          <button class="btn-ctrl btn-correct-memory" data-context="${mem.contextName}" style="color: var(--primary);">✏️ Correct</button>
           <button class="btn-ctrl btn-delete-memory" data-context="${mem.contextName}" style="color: #f87171;">🗑 Forget</button>
         </div>
       `;
@@ -93,6 +94,18 @@ class MemoryController {
           mode: 'zen',
         });
         this.app.switchView('zen');
+      });
+
+      card.querySelector('.btn-correct-memory').addEventListener('click', () => {
+        const newStep = prompt(`Update last step for ${mem.contextName}:`, mem.lastStep || '');
+        if (newStep !== null) {
+          const newTopic = prompt(`Update topic for ${mem.contextName}:`, mem.topic || '');
+          window.echoMemory.update(mem.contextName, {
+            lastStep: newStep.trim(),
+            topic: newTopic !== null ? newTopic.trim() : mem.topic,
+            source: 'user_declared',
+          });
+        }
       });
 
       card.querySelector('.btn-delete-memory').addEventListener('click', () => {

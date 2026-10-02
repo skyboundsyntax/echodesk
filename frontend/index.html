@@ -41,6 +41,10 @@
 
     <!-- Real-time Privacy & Sensor Indicators -->
     <div class="status-indicators">
+      <div id="pill-flow-preference" class="sensor-pill" title="Adaptive Intervention Policy: Flow protection active">
+        <span class="dot" style="background: #22d3ee;"></span>
+        <span id="pill-flow-text" class="pill-text">Flow: Minimal (Quiet)</span>
+      </div>
       <div id="pill-sensor-mic" class="sensor-pill">
         <span class="dot"></span>
         <span class="pill-text">Mic: Push-to-Talk</span>
@@ -86,8 +90,10 @@
           <button class="quick-chip" data-input="JOT, pause">“JOT, pause”</button>
           <button class="quick-chip" data-input="JOT, I stopped an hour ago">“JOT, I stopped an hour ago”</button>
           <button class="quick-chip" data-input="JOT, resume DBMS">“JOT, resume DBMS”</button>
-          <button class="quick-chip" data-input="JOT, continue DBMS on laptop">“JOT, continue DBMS on laptop”</button>
           <button class="quick-chip" data-input="JOT, less reminders">“JOT, less reminders”</button>
+          <button class="quick-chip" data-input="JOT, balanced reminders">“JOT, balanced reminders”</button>
+          <button class="quick-chip" data-input="Why didn't you remind me?">“Why didn't you remind me?”</button>
+          <button class="quick-chip" data-input="Why did you pause?">“Why did you pause?”</button>
         </div>
       </div>
 
@@ -209,6 +215,9 @@
             </button>
             <button id="demo-simulate-pomodoro" class="quick-chip" style="background: rgba(6,182,212,0.1); border-color: rgba(6,182,212,0.3); color: #22d3ee;">
               🧪 Simulate 25m Pomodoro Boundary
+            </button>
+            <button id="demo-simulate-checkin" class="quick-chip" style="background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #c084fc;">
+              🧪 Offer Smart Check-In
             </button>
           </div>
 

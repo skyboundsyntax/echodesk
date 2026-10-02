@@ -144,6 +144,16 @@ class EchoDeskApp {
         }
       });
     }
+
+    const demoSimCheckinBtn = document.getElementById('demo-simulate-checkin');
+    if (demoSimCheckinBtn) {
+      demoSimCheckinBtn.addEventListener('click', () => {
+        if (this.flowEngine) {
+          const checkIn = this.flowEngine.getNextCheckIn();
+          this.zenController.showCheckIn(checkIn);
+        }
+      });
+    }
   }
 
   switchView(viewName) {

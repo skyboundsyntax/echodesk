@@ -8,6 +8,8 @@ const http = require('http');
 const { WorkSession, WorkSessionState } = require('./core/session-state');
 const { PrivacyPolicyGate } = require('./core/privacy-gate');
 const { IntentEngine, DeterministicLocalProvider, GeminiInteractionsProvider } = require('./engines/intent-engine');
+const { EchoMemoryEngine } = require('./engines/memory-engine');
+const { FlowEngine, FlowDecision, CheckInType } = require('./engines/flow-engine');
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -18,9 +20,10 @@ const aiProvider = process.env.GEMINI_API_KEY
   ? new GeminiInteractionsProvider(process.env.GEMINI_API_KEY)
   : new DeterministicLocalProvider();
 const intentEngine = new IntentEngine({ aiProvider, privacyGate });
+const echoMemory = new EchoMemoryEngine({ privacyGate });
+const flowEngine = new FlowEngine();
 
 let activeSession = new WorkSession();
-const storedMemories = [];
 let pendingHandoff = null;
 
 function sendJSON(res, statusCode, data) {
@@ -143,36 +146,99 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, activeSession.toJSON());
     }
 
-    // 4. Echo Memory Endpoints (GET /api/memory, POST /api/memory, DELETE /api/memory)
+    // 4. Echo Memory Endpoints (GET, POST, PUT, DELETE)
+    if (req.method === 'GET' && path === '/api/memory/resume') {
+      const ctx = url.searchParams.get('context') || '';
+      return sendJSON(res, 200, { greeting: echoMemory.formatResumeGreeting(ctx) });
+    }
+
+    if (req.method === 'GET' && path.startsWith('/api/memory/')) {
+      const ctx = decodeURIComponent(path.replace('/api/memory/', ''));
+      const found = echoMemory.get(ctx);
+      if (!found) return sendJSON(res, 404, { error: `Memory for "${ctx}" not found.` });
+      return sendJSON(res, 200, found);
+    }
+
     if (req.method === 'GET' && path === '/api/memory') {
-      return sendJSON(res, 200, storedMemories);
+      return sendJSON(res, 200, echoMemory.getAll());
     }
 
     if (req.method === 'POST' && path === '/api/memory') {
       const body = await parseBody(req);
-      const gateCheck = privacyGate.evaluate('SAVE_MEMORY', {
-        containsRawSensorData: Boolean(body.rawAudio || body.rawVideo),
-      });
-
-      if (!gateCheck.allowed) {
-        return sendJSON(res, 403, { error: gateCheck.reason, code: gateCheck.code });
+      try {
+        const saved = echoMemory.save(body);
+        return sendJSON(res, 201, saved);
+      } catch (err) {
+        return sendJSON(res, 403, { error: err.message });
       }
+    }
 
-      if (body.contextName) {
-        const idx = storedMemories.findIndex((m) => m.contextName.toLowerCase() === body.contextName.toLowerCase());
-        const record = { ...body, updatedAt: Date.now() };
-        if (idx >= 0) storedMemories[idx] = record;
-        else storedMemories.unshift(record);
-      }
-      return sendJSON(res, 200, storedMemories);
+    if (req.method === 'PUT' && path.startsWith('/api/memory/')) {
+      const ctx = decodeURIComponent(path.replace('/api/memory/', ''));
+      const body = await parseBody(req);
+      const updated = echoMemory.update(ctx, body);
+      if (!updated) return sendJSON(res, 404, { error: `Memory for "${ctx}" not found.` });
+      return sendJSON(res, 200, updated);
+    }
+
+    if (req.method === 'DELETE' && path.startsWith('/api/memory/')) {
+      const ctx = decodeURIComponent(path.replace('/api/memory/', ''));
+      const deleted = echoMemory.delete(ctx);
+      return sendJSON(res, 200, { deleted, contextName: ctx });
     }
 
     if (req.method === 'DELETE' && path === '/api/memory') {
-      storedMemories.length = 0;
-      return sendJSON(res, 200, { message: 'All memories purged permanently.' });
+      const count = echoMemory.clearAll();
+      return sendJSON(res, 200, { message: `All ${count} memories purged permanently.` });
     }
 
-    // 5. Privacy Center Endpoints (GET /api/privacy, POST /api/privacy)
+    // 5. Flow & Intervention Engine Endpoints (GET /api/flow/status, POST /api/flow/evaluate, etc.)
+    if (req.method === 'GET' && path === '/api/flow/status') {
+      return sendJSON(res, 200, flowEngine.getPolicyInfo());
+    }
+
+    if (req.method === 'POST' && path === '/api/flow/evaluate') {
+      const body = await parseBody(req);
+      const evalContext = {
+        sessionState: body.sessionState || activeSession.state,
+        activeDurationMs: typeof body.activeDurationMs === 'number' ? body.activeDurationMs : activeSession.getActiveDurationMs(),
+        presenceSignal: body.presenceSignal || 'PRESENT',
+        now: body.now,
+        preference: body.preference,
+        lastInterventionAt: body.lastInterventionAt,
+        absenceGracePeriodMs: body.absenceGracePeriodMs,
+      };
+      const result = flowEngine.evaluate(evalContext);
+      return sendJSON(res, 200, result);
+    }
+
+    if (req.method === 'POST' && path === '/api/flow/preference') {
+      const body = await parseBody(req);
+      const pref = body.preference;
+      const success = flowEngine.setPreference(pref);
+      if (!success) {
+        return sendJSON(res, 400, { error: 'Invalid preference. Must be "minimal", "balanced", or "frequent".' });
+      }
+      return sendJSON(res, 200, { preference: flowEngine.getPreference() });
+    }
+
+    if (req.method === 'POST' && path === '/api/flow/explain') {
+      const body = await parseBody(req);
+      const explanation = flowEngine.explainDecision(body.query || '', body.context || {});
+      return sendJSON(res, 200, explanation);
+    }
+
+    if (req.method === 'GET' && path === '/api/flow/checkin') {
+      return sendJSON(res, 200, flowEngine.getNextCheckIn());
+    }
+
+    if (req.method === 'POST' && path === '/api/flow/checkin/response') {
+      const body = await parseBody(req);
+      const recorded = flowEngine.recordInterventionResponse(body.response);
+      return sendJSON(res, 200, recorded);
+    }
+
+    // 6. Privacy Center Endpoints (GET /api/privacy, POST /api/privacy)
     if (req.method === 'GET' && path === '/api/privacy') {
       return sendJSON(res, 200, {
         permissions: privacyGate.getPermissions(),
@@ -186,7 +252,7 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, { permissions: updated });
     }
 
-    // 6. Cross-Device Bridge Endpoints (POST /api/bridge/handoff, GET /api/bridge/handoff)
+    // 7. Cross-Device Bridge Endpoints (POST /api/bridge/handoff, GET /api/bridge/handoff)
     if (req.method === 'POST' && path === '/api/bridge/handoff') {
       const body = await parseBody(req);
       const gateCheck = privacyGate.evaluate('CROSS_DEVICE_HANDOFF', { explicitUserRequest: true });
@@ -223,4 +289,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, activeSession, privacyGate, intentEngine };
+module.exports = { server, activeSession, privacyGate, intentEngine, echoMemory, flowEngine, FlowDecision, CheckInType };

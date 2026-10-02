@@ -121,8 +121,8 @@ class DeterministicLocalProvider extends AIProvider {
       };
     }
 
-    // 7. User Intervention Preference ("less reminders", "fewer reminders")
-    if (/less\s+reminders?|fewer\s+reminders?|minimal\s+reminders?|quiet\s+mode/i.test(lower)) {
+    // 7. User Intervention Preference ("less reminders", "balanced reminders", "frequent reminders")
+    if (/(less|fewer|minimal|quiet)\s+reminders?|quiet\s+mode/i.test(lower)) {
       return {
         intent: 'SET_INTERVENTION_PREFERENCE',
         confidence: 0.95,
@@ -130,8 +130,34 @@ class DeterministicLocalProvider extends AIProvider {
         source: 'user_declared',
       };
     }
+    if (/(balanced|normal|moderate)\s+reminders?/i.test(lower)) {
+      return {
+        intent: 'SET_INTERVENTION_PREFERENCE',
+        confidence: 0.95,
+        preference: 'balanced',
+        source: 'user_declared',
+      };
+    }
+    if (/(more|frequent)\s+reminders?/i.test(lower)) {
+      return {
+        intent: 'SET_INTERVENTION_PREFERENCE',
+        confidence: 0.95,
+        preference: 'frequent',
+        source: 'user_declared',
+      };
+    }
 
-    // 8. Status & Memory Queries ("what was i doing", "status", "last step")
+    // 8. Policy Explainability Queries ("why didn't you remind me", "why did you pause", "why are you quiet")
+    if (/why\s+(did|didn['’]?t|were)\s+you\s+(remind|pause|stay\s+quiet|quiet)|why\s+no\s+reminder|why\s+pause/i.test(lower)) {
+      return {
+        intent: 'ASK_EXPLANATION',
+        confidence: 0.95,
+        query: input,
+        source: 'user_declared',
+      };
+    }
+
+    // 9. Status & Memory Queries ("what was i doing", "status", "last step")
     if (/what\s+(was|am)\s+i\s+doing|status|last\s+step|current\s+session/i.test(lower)) {
       return {
         intent: 'ASK_STATUS',
@@ -217,13 +243,15 @@ class GeminiInteractionsProvider extends AIProvider {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`;
       const systemInstruction = `You are JOT, the intent parser for ECHODESK. Convert user input to JSON:
 {
-  "intent": "START_WORK_SESSION" | "PAUSE_SESSION" | "RESUME_SESSION" | "STOP_SESSION" | "CORRECT_SESSION_TIME" | "UPDATE_CONTEXT" | "REQUEST_HANDOFF" | "SET_INTERVENTION_PREFERENCE" | "ASK_STATUS" | "FORGET_MEMORY" | "UNCERTAIN",
+  "intent": "START_WORK_SESSION" | "PAUSE_SESSION" | "RESUME_SESSION" | "STOP_SESSION" | "CORRECT_SESSION_TIME" | "UPDATE_CONTEXT" | "REQUEST_HANDOFF" | "SET_INTERVENTION_PREFERENCE" | "ASK_EXPLANATION" | "ASK_STATUS" | "FORGET_MEMORY" | "UNCERTAIN",
   "contextName": string,
   "topic": string,
   "lastStep": string,
   "activity": string,
   "confidence": number,
-  "minutesAgo": number
+  "minutesAgo": number,
+  "preference": "minimal" | "balanced" | "frequent",
+  "query": string
 }
 Input: "${input}"`;
 

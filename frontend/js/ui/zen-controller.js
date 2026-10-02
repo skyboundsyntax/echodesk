@@ -75,11 +75,17 @@ class ZenController {
     // Check-in actions
     if (this.checkinAcceptBtn) {
       this.checkinAcceptBtn.addEventListener('click', () => {
+        if (window.flowEngine) {
+          window.flowEngine.recordInterventionResponse('accepted');
+        }
         this.hideCheckIn();
       });
     }
     if (this.checkinDismissBtn) {
       this.checkinDismissBtn.addEventListener('click', () => {
+        if (window.flowEngine) {
+          window.flowEngine.recordInterventionResponse('dismissed');
+        }
         this.hideCheckIn();
       });
     }

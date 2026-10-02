@@ -1,5 +1,5 @@
 /**
- * ECHODESK — Flow & Intervention Policy Engine
+ * ECHODESK Backend — Flow & Intervention Policy Engine
  * Implements Stage 5 of the Antigravity Build Plan:
  * Adaptive, respectful focus protection and smart check-in policy.
  * 
@@ -31,12 +31,8 @@ class FlowEngine {
   }
 
   constructor(options = {}) {
-    this.storage = options.storage || (typeof window !== 'undefined' ? window.appStorage : null);
-    this.eventBus = options.eventBus || (typeof window !== 'undefined' ? window.appEvents : null);
-
-    // Intervention preference: 'minimal' | 'balanced' | 'frequent'
-    this.preference = this._loadPreference();
-    this.lastInterventionAt = 0;
+    this.preference = options.preference || 'minimal';
+    this.lastInterventionAt = options.lastInterventionAt || 0;
     this.checkInIndex = 0;
     this.checkInQueue = [
       CheckInType.WATER,
@@ -45,29 +41,16 @@ class FlowEngine {
       CheckInType.STRETCH,
     ];
 
-    // Absence tracking for pause detection
     this.absenceStartedAt = null;
-    this.absenceGracePeriodMs = options.absenceGracePeriodMs || 12000; // 12 seconds in demo mode before asking
-    this.recentDecisions = [];
-  }
-
-  _loadPreference() {
-    if (this.storage && typeof this.storage.get === 'function') {
-      return this.storage.get('intervention_preference', 'minimal');
-    }
-    return 'minimal';
+    this.absenceGracePeriodMs = options.absenceGracePeriodMs || 12000;
   }
 
   setPreference(pref) {
     if (['minimal', 'balanced', 'frequent'].includes(pref)) {
       this.preference = pref;
-      if (this.storage && typeof this.storage.set === 'function') {
-        this.storage.set('intervention_preference', pref);
-      }
-      if (this.eventBus && typeof this.eventBus.emit === 'function') {
-        this.eventBus.emit('flow:preference-changed', pref);
-      }
+      return true;
     }
+    return false;
   }
 
   getPreference() {
@@ -89,18 +72,6 @@ class FlowEngine {
     };
   }
 
-  /**
-   * Evaluate whether JOT should speak, check in, or stay silent.
-   * @param {Object} context
-   * @param {string} context.sessionState 'ACTIVE' | 'PAUSED' | 'ENDED' | 'UNCERTAIN' | 'IDLE'
-   * @param {number} context.activeDurationMs
-   * @param {string} [context.presenceSignal] 'PRESENT' | 'ABSENT' | 'UNCERTAIN'
-   * @param {number} [context.now] Optional timestamp override for deterministic tests
-   * @param {string} [context.preference] Optional preference override
-   * @param {number} [context.lastInterventionAt] Optional timestamp override
-   * @param {number} [context.absenceGracePeriodMs] Optional grace period override
-   * @returns {{ decision: string, reason: string, checkIn?: Object, flowProtected?: boolean, prompt?: string }}
-   */
   evaluate(context = {}) {
     const { sessionState, activeDurationMs = 0, presenceSignal = 'PRESENT' } = context;
     const now = typeof context.now === 'number' ? context.now : Date.now();
@@ -160,7 +131,6 @@ class FlowEngine {
     const timeSinceLastIntervention = now - lastAt;
 
     // 4. Pomodoro Threshold Flow Protection (>= 25 minutes)
-    // Rule: Never force an interruption on active flow at 25 minutes
     if (isPastPomodoro && timeSinceLastIntervention < minIntervalMs) {
       return {
         decision: FlowDecision.SHOW_FLOW_STATUS,
@@ -209,11 +179,6 @@ class FlowEngine {
     };
   }
 
-  /**
-   * Fetch the next cyclical check-in
-   * @param {number} [timestamp]
-   * @returns {Object}
-   */
   getNextCheckIn(timestamp = Date.now()) {
     const checkIn = this.checkInQueue[this.checkInIndex % this.checkInQueue.length];
     this.checkInIndex++;
@@ -221,24 +186,11 @@ class FlowEngine {
     return checkIn;
   }
 
-  /**
-   * User feedback after a check-in is presented
-   * @param {string} response 'accepted' | 'dismissed'
-   * @param {number} [timestamp]
-   */
   recordInterventionResponse(response = 'accepted', timestamp = Date.now()) {
     this.lastInterventionAt = timestamp;
-    if (this.eventBus && typeof this.eventBus.emit === 'function') {
-      this.eventBus.emit('flow:intervention-response', { response, timestamp });
-    }
+    return { response, timestamp };
   }
 
-  /**
-   * Transparently explain recent policy decisions without hallucination or hidden chain-of-thought
-   * @param {string} query
-   * @param {Object} [context]
-   * @returns {{ topic: string, explanation: string, rule: string }}
-   */
   explainDecision(query = '', context = {}) {
     const q = query.toLowerCase();
     const pref = context.preference || this.preference;
@@ -275,13 +227,4 @@ class FlowEngine {
   }
 }
 
-if (typeof window !== 'undefined') {
-  window.FlowEngine = FlowEngine;
-  window.FlowDecision = FlowDecision;
-  window.CheckInType = CheckInType;
-  window.flowEngine = window.flowEngine || new FlowEngine();
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { FlowEngine, FlowDecision, CheckInType };
-}
+module.exports = { FlowEngine, FlowDecision, CheckInType };

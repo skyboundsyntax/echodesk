@@ -208,6 +208,18 @@ class JotController {
         this.addFeedItem('STATUS_INQUIRY', statusMsg, true);
         break;
 
+      case 'ASK_EXPLANATION':
+        if (window.flowEngine) {
+          const explanation = window.flowEngine.explainDecision(command.query || input, {
+            preference: window.flowEngine.getPreference(),
+            sessionState: this.app.session ? this.app.session.state : 'IDLE',
+          });
+          this.addFeedItem('JOT_EXPLANATION', explanation.explanation, true);
+        } else {
+          this.addFeedItem('JOT_EXPLANATION', 'JOT protects your flow based on active session state and your minimal interruption preference.', true);
+        }
+        break;
+
       case 'UNCERTAIN':
       default:
         this.addFeedItem('UNCERTAIN_INTENT', command.prompt || `I heard "${input}". Could you clarify your work context?`, false);

@@ -100,6 +100,38 @@ class EchoMemoryEngine {
   }
 
   /**
+   * Update an existing memory record
+   * @param {string} contextName
+   * @param {Object} updates
+   * @returns {Object|null}
+   */
+  update(contextName, updates = {}) {
+    if (!contextName) return null;
+    const list = this._load();
+    const index = list.findIndex(
+      (m) => m.contextName.toLowerCase() === contextName.toLowerCase()
+    );
+
+    if (index === -1) {
+      console.warn(`[EchoMemory] Memory for context "${contextName}" not found.`);
+      return null;
+    }
+
+    // Merge updates
+    const existing = list[index];
+    const updated = {
+      ...existing,
+      ...updates,
+      contextName: existing.contextName, // preserve original context name
+      updatedAt: Date.now(),
+    };
+
+    list[index] = updated;
+    this._save(list);
+    return updated;
+  }
+
+  /**
    * Retrieve all saved memories
    * @returns {Array<Object>}
    */

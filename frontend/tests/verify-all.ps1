@@ -58,6 +58,7 @@ $expectedFiles = @(
     "tests/test-runner.js",
     "tests/session-state.test.js",
     "tests/zen-mode.test.js",
+    "tests/echo-memory.test.js",
     "tests/integration.test.js"
 )
 
