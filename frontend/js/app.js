@@ -96,6 +96,13 @@ class EchoDeskApp {
     this.privacyController.renderToggles();
     this.privacyController.renderAuditLog();
     this.bridgeController.render();
+    if (this.events) {
+      this.events.on('flow:preference-changed', () => this.updateTopbarSensorPills());
+      this.events.on('voice:started', () => this.updateTopbarSensorPills());
+      this.events.on('voice:ended', () => this.updateTopbarSensorPills());
+      this.events.on('voice:result', () => this.updateTopbarSensorPills());
+      this.events.on('voice:error', () => this.updateTopbarSensorPills());
+    }
     this.updateTopbarSensorPills();
   }
 
@@ -300,6 +307,16 @@ class EchoDeskApp {
       const isCamActive = this.cameraPresence && this.cameraPresence.isActive;
       camPill.className = isCamActive ? 'sensor-pill active' : 'sensor-pill';
       camPill.querySelector('.pill-text').textContent = isCamActive ? `Cam: ${this.cameraPresence.currentSignal}` : 'Cam: Off (Zen Only)';
+    }
+
+    const flowPill = document.getElementById('pill-flow-preference');
+    if (flowPill && this.flowEngine) {
+      const pref = this.flowEngine.getPreference();
+      const prefText = pref ? (pref.charAt(0).toUpperCase() + pref.slice(1)) : 'Minimal';
+      const textElem = flowPill.querySelector('.pill-text');
+      if (textElem) {
+        textElem.textContent = `Flow: ${prefText}`;
+      }
     }
   }
 }

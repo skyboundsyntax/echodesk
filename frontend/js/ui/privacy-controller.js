@@ -19,6 +19,7 @@ class PrivacyController {
     this.purgeAllBtn = document.getElementById('btn-purge-all-data');
     this.apiKeyInput = document.getElementById('gemini-api-key-input');
     this.saveApiKeyBtn = document.getElementById('btn-save-api-key');
+    this.flowSelect = document.getElementById('priv-select-flow');
   }
 
   bindEvents() {
@@ -40,6 +41,14 @@ class PrivacyController {
     if (this.cloudToggle) {
       this.cloudToggle.addEventListener('change', (e) => {
         window.privacyGate.savePermissions({ cloudReasoningAllowed: e.target.checked });
+      });
+    }
+
+    if (this.flowSelect) {
+      this.flowSelect.addEventListener('change', (e) => {
+        if (window.flowEngine) {
+          window.flowEngine.setPreference(e.target.value);
+        }
       });
     }
 
@@ -70,6 +79,7 @@ class PrivacyController {
     if (window.appEvents) {
       window.appEvents.on('privacy:gate-evaluated', () => this.renderAuditLog());
       window.appEvents.on('privacy:permissions-changed', () => this.renderToggles());
+      window.appEvents.on('flow:preference-changed', () => this.renderToggles());
     }
   }
 
@@ -80,6 +90,10 @@ class PrivacyController {
     if (this.cameraToggle) this.cameraToggle.checked = perms.cameraEnabled;
     if (this.memoryToggle) this.memoryToggle.checked = perms.memoryEnabled;
     if (this.cloudToggle) this.cloudToggle.checked = perms.cloudReasoningAllowed;
+
+    if (this.flowSelect && window.flowEngine) {
+      this.flowSelect.value = window.flowEngine.getPreference();
+    }
 
     if (this.apiKeyInput && window.appStorage) {
       this.apiKeyInput.value = window.appStorage.get('gemini_api_key', '');

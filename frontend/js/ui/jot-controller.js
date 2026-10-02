@@ -105,24 +105,40 @@ class JotController {
   async handleVoiceInput() {
     if (!window.voiceInput) return;
 
+    const span = this.voiceBtn ? this.voiceBtn.querySelector('span') : null;
+
     if (window.voiceInput.isListening) {
       window.voiceInput.stopListening();
-      this.voiceBtn.classList.remove('active');
+      if (this.voiceBtn) this.voiceBtn.classList.remove('active');
+      if (span) span.textContent = 'Speak';
       return;
     }
 
-    this.voiceBtn.classList.add('active');
+    if (this.voiceBtn) this.voiceBtn.classList.add('active');
+    if (span) span.textContent = 'Listening...';
+
     try {
       const transcript = await window.voiceInput.startListening({ explicitUserGesture: true });
-      this.voiceBtn.classList.remove('active');
+      if (this.voiceBtn) this.voiceBtn.classList.remove('active');
+      if (span) span.textContent = 'Speak';
+
       if (transcript) {
         if (this.input) this.input.value = transcript;
+        this.addFeedItem('VOICE_UTTERANCE', `Heard: "${transcript}" (Zero raw audio stored)`, true);
         await this.processCommand(transcript);
       }
     } catch (err) {
-      this.voiceBtn.classList.remove('active');
+      if (this.voiceBtn) this.voiceBtn.classList.remove('active');
+      if (span) span.textContent = 'Speak';
       console.warn('[JotController] Voice input stopped:', err.message);
-      if (err.code !== 'NOT_SUPPORTED') {
+
+      if (err.code === 'NOT_SUPPORTED') {
+        this.addFeedItem('VOICE_FALLBACK', 'Speech recognition is not available in this environment. Falling back to keyboard input.', false);
+        if (this.input) {
+          this.input.focus();
+          this.input.placeholder = 'Type your command here (voice fallback active)...';
+        }
+      } else {
         this.addFeedItem('VOICE_NOTICE', err.message, false);
       }
     }

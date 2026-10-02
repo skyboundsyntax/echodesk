@@ -19,10 +19,11 @@ const FlowDecision = Object.freeze({
 });
 
 const CheckInType = Object.freeze({
-  WATER: { id: 'water', icon: '💧', title: 'Quick Reset', text: 'Grab some water before continuing.' },
-  LOOK_AWAY: { id: 'look_away', icon: '👀', title: 'Micro Reset', text: 'Look away from the screen for 20 seconds.' },
-  BREATH: { id: 'breath', icon: '🫁', title: 'Three Breaths', text: 'Three deep breaths to ground your focus.' },
-  STRETCH: { id: 'stretch', icon: '🧘', title: 'Posture Check', text: 'Roll your shoulders back and relax your jaw.' },
+  WATER: { id: 'water', icon: '💧', title: 'Hydration Reset', text: 'Grab a sip of water before continuing.' },
+  LOOK_AWAY: { id: 'look_away', icon: '👀', title: 'Look Away', text: 'Rest your eyes: look at something 20 feet away for 20 seconds.' },
+  BREATH: { id: 'breath', icon: '🫁', title: 'Three Breaths', text: 'Take three deep breaths to ground your focus.' },
+  MOVEMENT: { id: 'movement', icon: '🧘', title: 'Movement Reset', text: 'Stand up, roll your shoulders back, and release tension.' },
+  STRETCH: { id: 'movement', icon: '🧘', title: 'Movement Reset', text: 'Stand up, roll your shoulders back, and release tension.' },
 });
 
 class FlowEngine {
@@ -42,7 +43,7 @@ class FlowEngine {
       CheckInType.WATER,
       CheckInType.LOOK_AWAY,
       CheckInType.BREATH,
-      CheckInType.STRETCH,
+      CheckInType.MOVEMENT,
     ];
 
     // Absence tracking for pause detection
@@ -95,6 +96,9 @@ class FlowEngine {
    * @param {string} context.sessionState 'ACTIVE' | 'PAUSED' | 'ENDED' | 'UNCERTAIN' | 'IDLE'
    * @param {number} context.activeDurationMs
    * @param {string} [context.presenceSignal] 'PRESENT' | 'ABSENT' | 'UNCERTAIN'
+   * @param {boolean} [context.naturalPause] Whether a natural pause or break is detected
+   * @param {boolean} [context.highEngagement] Whether active flow engagement is currently high
+   * @param {boolean} [context.urgentCheckIn] Whether check-in is urgent
    * @param {number} [context.now] Optional timestamp override for deterministic tests
    * @param {string} [context.preference] Optional preference override
    * @param {number} [context.lastInterventionAt] Optional timestamp override
@@ -109,7 +113,29 @@ class FlowEngine {
       ? context.absenceGracePeriodMs
       : this.absenceGracePeriodMs;
 
-    // 1. Non-active sessions: Stay silent
+    // 1. Natural Pause Detected -> OFFER_CHECKIN
+    if (context.naturalPause) {
+      this.absenceStartedAt = null;
+      const checkIn = this.getNextCheckIn(now);
+      return {
+        decision: FlowDecision.OFFER_CHECKIN,
+        reason: 'Natural pause detected. Good opportunity for a gentle reset.',
+        checkIn,
+        disclaimer: FlowEngine.DISCLAIMER,
+      };
+    }
+
+    // 2. High Engagement + Non-Urgent Check-In -> STAY_SILENT
+    if ((context.highEngagement || context.flowEngagement === 'high') && !context.urgentCheckIn) {
+      return {
+        decision: FlowDecision.STAY_SILENT,
+        flowProtected: true,
+        reason: 'Active flow-support is high and check-in is non-urgent. JOT stays silent.',
+        disclaimer: FlowEngine.DISCLAIMER,
+      };
+    }
+
+    // 3. Non-active sessions: Stay silent
     if (sessionState !== 'ACTIVE') {
       this.absenceStartedAt = null;
       return {

@@ -29,10 +29,10 @@ class VoiceInput {
    */
   startListening(meta = { explicitUserGesture: true }) {
     return new Promise((resolve, reject) => {
-      // 1. Check Privacy Policy Gate
+      // 1. Check Privacy Policy Gate (Mandatory non-bypassable code gate)
       if (this.privacyGate) {
         const evaluation = this.privacyGate.evaluate('ACTIVATE_MIC', {
-          explicitUserGesture: Boolean(meta.explicitUserGesture),
+          explicitUserGesture: Boolean(meta && meta.explicitUserGesture),
         });
         if (!evaluation.allowed) {
           const err = new Error(evaluation.reason);
@@ -53,7 +53,7 @@ class VoiceInput {
         this.recognition.lang = 'en-US';
         this.recognition.interimResults = false;
         this.recognition.maxAlternatives = 1;
-        this.recognition.continuous = false; // Single command only
+        this.recognition.continuous = false; // Strictly single command only — no passive listening
 
         this.recognition.onstart = () => {
           this.isListening = true;
@@ -86,6 +86,38 @@ class VoiceInput {
     });
   }
 
+  /**
+   * Safe deterministic simulator for voice utterances (tests & headless demos)
+   * Enforces the exact same Privacy Policy Gate checks.
+   * @param {string} transcript
+   * @param {Object} [meta]
+   * @returns {Promise<string>}
+   */
+  simulateVoiceUtterance(transcript, meta = { explicitUserGesture: true }) {
+    return new Promise((resolve, reject) => {
+      if (this.privacyGate) {
+        const evaluation = this.privacyGate.evaluate('ACTIVATE_MIC', {
+          explicitUserGesture: Boolean(meta && meta.explicitUserGesture),
+        });
+        if (!evaluation.allowed) {
+          const err = new Error(evaluation.reason);
+          err.code = evaluation.code;
+          return reject(err);
+        }
+      }
+
+      this.isListening = true;
+      if (this.eventBus) this.eventBus.emit('voice:started', {});
+
+      setTimeout(() => {
+        this.isListening = false;
+        if (this.eventBus) this.eventBus.emit('voice:result', { transcript });
+        if (this.eventBus) this.eventBus.emit('voice:ended', {});
+        resolve(transcript);
+      }, 50);
+    });
+  }
+
   stopListening() {
     if (this.recognition && this.isListening) {
       try {
@@ -95,6 +127,7 @@ class VoiceInput {
       }
     }
     this.isListening = false;
+    if (this.eventBus) this.eventBus.emit('voice:ended', {});
   }
 }
 

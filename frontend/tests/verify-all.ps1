@@ -59,6 +59,10 @@ $expectedFiles = @(
     "tests/session-state.test.js",
     "tests/zen-mode.test.js",
     "tests/echo-memory.test.js",
+    "tests/flow-policy.test.js",
+    "tests/voice-input.test.js",
+    "tests/camera-presence.test.js",
+    "tests/smart-checkins.test.js",
     "tests/integration.test.js"
 )
 
@@ -90,6 +94,12 @@ Assert-True ($flowFileContent.Contains('pomodoroThresholdMs = 25 * 60 * 1000')) 
 Assert-True ($flowFileContent.Contains('Flow protected')) "Flow protected logic verified"
 Assert-True ($flowFileContent.Contains('ASK_PAUSE')) "FlowEngine defines ASK_PAUSE for natural absence detection"
 Assert-True ($flowFileContent.Contains('OFFER_CHECKIN')) "FlowEngine defines OFFER_CHECKIN"
+Assert-True ($flowFileContent.Contains('does not claim psychological or medical')) "Non-medical product disclaimer verified"
+Assert-True ($flowFileContent.Contains('minimal: 45 * 60 * 1000')) "Minimal preference 45m threshold enforced"
+Assert-True ($flowFileContent.Contains('balanced: 30 * 60 * 1000')) "Balanced preference 30m threshold enforced"
+Assert-True ($flowFileContent.Contains('frequent: 15 * 60 * 1000')) "Frequent preference 15m threshold enforced"
+Assert-True ($flowFileContent.Contains('explainDecision')) "Explainability method implemented"
+Assert-True ($flowFileContent.Contains('recordInterventionResponse')) "User response recording implemented"
 
 # 5. Stage 4 Echo Memory
 Write-Host "`n5. Verifying Stage 4: Echo Memory Engine..." -ForegroundColor Yellow
@@ -98,15 +108,68 @@ Assert-True ($memoryFileContent.Contains('Welcome back. You were working on')) "
 Assert-True ($memoryFileContent.Contains('clearAll()')) "Memory purge control implemented"
 Assert-True ($memoryFileContent.Contains('SAVE_MEMORY')) "Memory engine passes through Privacy Policy Gate"
 
-# 6. Stage 9 Cross-Device Bridge
-Write-Host "`n6. Verifying Stage 9: Cross-Device Bridge..." -ForegroundColor Yellow
+# 6. Stage 6 Voice Input & Scoped Push-to-Talk
+Write-Host "`n6. Verifying Stage 6: Voice Input & Push-to-Talk..." -ForegroundColor Yellow
+$voiceFileContent = Get-Content (Join-Path $PSScriptRoot "..\js\sensors\voice-input.js") -Raw
+Assert-True ($voiceFileContent.Contains('class VoiceInput')) "VoiceInput class implemented"
+Assert-True ($voiceFileContent.Contains('explicitUserGesture')) "explicitUserGesture required for activation"
+Assert-True ($voiceFileContent.Contains('continuous = false')) "Continuous passive listening is blocked"
+Assert-True ($voiceFileContent.Contains('simulateVoiceUtterance')) "simulateVoiceUtterance available for testing"
+
+$intentFileContent = Get-Content (Join-Path $PSScriptRoot "..\js\ai\ai-provider.js") -Raw
+Assert-True ($intentFileContent.Contains('studying')) "Voice command 'Hey JOT, studying DBMS' supported"
+Assert-True ($intentFileContent.Contains('pause')) "Voice command 'JOT, pause' supported"
+Assert-True ($intentFileContent.Contains('stop')) "Voice command 'JOT, stop' supported"
+Assert-True ($intentFileContent.Contains('stopped') -and $intentFileContent.Contains('ago')) "Voice command 'JOT, I stopped an hour ago' supported"
+Assert-True ($intentFileContent.Contains('resume')) "Voice command 'JOT, resume DBMS' supported"
+
+# 7. Stage 7 Camera Presence Assistance
+Write-Host "`n7. Verifying Stage 7: Camera & Zen Presence Assistance..." -ForegroundColor Yellow
+$cameraFileContent = Get-Content (Join-Path $PSScriptRoot "..\js\sensors\camera-presence.js") -Raw
+Assert-True ($cameraFileContent.Contains('class CameraPresenceSensor')) "CameraPresenceSensor class implemented"
+Assert-True ($cameraFileContent.Contains('ACTIVATE_CAMERA')) "Camera presence evaluates ACTIVATE_CAMERA in policy gate"
+Assert-True ($cameraFileContent.Contains('PRESENT') -and $cameraFileContent.Contains('ABSENT') -and $cameraFileContent.Contains('UNCERTAIN')) "Sensor emits minimal classified signals (PRESENT, ABSENT, UNCERTAIN)"
+Assert-True ($cameraFileContent.Contains('canvasElement')) "Camera operates local downsampled canvas with zero raw frame retention"
+
+$backendCameraFile = Join-Path $PSScriptRoot "..\..\backend\sensors\camera-presence.js"
+if (Test-Path $backendCameraFile) {
+    $backendCamContent = Get-Content $backendCameraFile -Raw
+    Assert-True ($backendCamContent.Contains('class CameraPresenceSensor')) "Backend CameraPresenceSensor implemented"
+    Assert-True ($backendCamContent.Contains('frameRetained: false')) "Backend presence sensor guarantees zero frame retention"
+}
+
+$gateContent = Get-Content (Join-Path $PSScriptRoot "..\js\engines\privacy-gate.js") -Raw
+Assert-True ($gateContent.Contains('cameraEnabled: false')) "Camera is OFF by default in privacy policy"
+Assert-True ($gateContent.Contains('DENY_CLOUD_VIDEO_STREAM')) "Streaming raw video to cloud is strictly denied"
+Assert-True ($gateContent.Contains('rawVideoRetention: false')) "Raw video retention is non-negotiably false"
+
+# 8. Stage 8 Smart Check-Ins & Flow Intervention Policy
+Write-Host "`n8. Verifying Stage 8: Smart Check-Ins & Preferences..." -ForegroundColor Yellow
+$flowContent = Get-Content (Join-Path $PSScriptRoot "..\js\engines\flow-engine.js") -Raw
+Assert-True ($flowContent.Contains('WATER:') -or $flowContent.Contains('water')) "Gentle check-in: Hydration supported"
+Assert-True ($flowContent.Contains('LOOK_AWAY:') -or $flowContent.Contains('look_away')) "Gentle check-in: Look away supported"
+Assert-True ($flowContent.Contains('BREATH:') -or $flowContent.Contains('breath')) "Gentle check-in: Three breaths supported"
+Assert-True ($flowContent.Contains('MOVEMENT:') -or $flowContent.Contains('STRETCH:')) "Gentle check-in: Short movement reset supported"
+Assert-True ($flowContent.Contains('naturalPause')) "Natural pause triggers gentle check-in"
+Assert-True ($flowContent.Contains('highEngagement')) "High engagement flow stays silent"
+Assert-True ($flowContent.Contains('minimal') -and $flowContent.Contains('balanced') -and $flowContent.Contains('frequent')) "Preferences (minimal, balanced, frequent) supported"
+
+$intentContent = Get-Content (Join-Path $PSScriptRoot "..\js\ai\ai-provider.js") -Raw
+Assert-True ($intentContent.Contains('less') -and $intentContent.Contains('reminders')) "Command 'JOT, less reminders' supported"
+
+$htmlContent = Get-Content (Join-Path $PSScriptRoot "..\index.html") -Raw
+Assert-True ($htmlContent.Contains('zen-checkin-card')) "Zen Mode check-in card container present"
+Assert-True ($htmlContent.Contains('zen-checkin-accept-btn')) "Zen check-in accept action present"
+
+# 9. Stage 10 Cross-Device Bridge
+Write-Host "`n9. Verifying Stage 10: Cross-Device Bridge..." -ForegroundColor Yellow
 $bridgeFileContent = Get-Content (Join-Path $PSScriptRoot "..\js\engines\bridge-engine.js") -Raw
 Assert-True ($bridgeFileContent.Contains('initiateHandoff')) "BridgeEngine implements initiateHandoff"
 Assert-True ($bridgeFileContent.Contains('receiveHandoff')) "BridgeEngine implements receiveHandoff"
 Assert-True ($bridgeFileContent.Contains('CROSS_DEVICE_HANDOFF')) "BridgeEngine evaluates CROSS_DEVICE_HANDOFF in policy gate"
 
-# 7. No Hardcoded Secrets Verification
-Write-Host "`n7. Checking for Hardcoded Secrets across Codebase..." -ForegroundColor Yellow
+# 10. No Hardcoded Secrets Verification
+Write-Host "`n10. Checking for Hardcoded Secrets across Codebase..." -ForegroundColor Yellow
 $allJsFiles = Get-ChildItem (Join-Path $PSScriptRoot "..\js") -Filter "*.js" -Recurse
 $hasSecret = $false
 foreach ($js in $allJsFiles) {

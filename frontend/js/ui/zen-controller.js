@@ -113,6 +113,8 @@ class ZenController {
     if (window.appEvents) {
       window.appEvents.on('session:state-change', () => this.render());
       window.appEvents.on('presence:signal', (e) => this.handlePresenceSignal(e));
+      window.appEvents.on('presence:started', () => this.render());
+      window.appEvents.on('presence:stopped', () => this.render());
     }
   }
 
@@ -149,6 +151,13 @@ class ZenController {
       } else {
         this.flowBanner.style.display = 'none';
       }
+    }
+
+    // Camera Sensor Pill
+    if (this.cameraStatusPill) {
+      const isCamActive = this.app.cameraPresence && this.app.cameraPresence.isActive;
+      this.cameraStatusPill.textContent = isCamActive ? '📷 Local Sensor: Active' : '📷 Local Sensor: Off';
+      this.cameraStatusPill.className = isCamActive ? 'zen-sensor-indicator on' : 'zen-sensor-indicator';
     }
   }
 
