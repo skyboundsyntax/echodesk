@@ -5,8 +5,6 @@
  */
 
 const http = require('http');
-const fs = require('fs');
-const path = require('path');
 const { WorkSession, WorkSessionState } = require('./core/session-state');
 const { PrivacyPolicyGate } = require('./core/privacy-gate');
 const { IntentEngine, DeterministicLocalProvider, GeminiInteractionsProvider } = require('./engines/intent-engine');
@@ -28,42 +26,6 @@ const flowEngine = new FlowEngine();
 const bridgeEngine = new BridgeEngine({ privacyGate });
 
 let activeSession = new WorkSession();
-
-const FRONTEND_DIR = path.resolve(__dirname, '../frontend');
-const MIME_TYPES = {
-  '.html': 'text/html; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.js': 'application/javascript; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
-  '.ico': 'image/x-icon',
-};
-
-function serveStatic(req, res, pathname) {
-  const safePath = pathname === '/' ? '/index.html' : pathname;
-  const targetFile = path.normalize(path.join(FRONTEND_DIR, safePath));
-  if (!targetFile.startsWith(FRONTEND_DIR)) {
-    res.writeHead(403, { 'Content-Type': 'text/plain' });
-    return res.end('Access Denied');
-  }
-
-  fs.stat(targetFile, (err, stats) => {
-    if (err || !stats.isFile()) {
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ error: `Not found: ${pathname}` }));
-    }
-
-    const ext = path.extname(targetFile).toLowerCase();
-    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Cache-Control': 'no-cache',
-    });
-    fs.createReadStream(targetFile).pipe(res);
-  });
-}
 
 function sendJSON(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -110,11 +72,6 @@ const server = http.createServer(async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const path = url.pathname;
-
-  // Serve static frontend files (HTML, CSS, JS, Assets)
-  if (!path.startsWith('/api') && path !== '/health') {
-    return serveStatic(req, res, path);
-  }
 
   try {
     // 1. Health Check
