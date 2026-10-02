@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/zen.css">
   <link rel="stylesheet" href="css/privacy.css">
   <link rel="stylesheet" href="css/bridge.css">
+  <link rel="stylesheet" href="css/demo.css">
 </head>
 <body>
 
@@ -57,6 +58,9 @@
         <span class="dot"></span>
         <span>Monitoring: OFF</span>
       </div>
+      <button id="btn-open-demo-modal" class="btn-ctrl" style="background: linear-gradient(135deg, rgba(168,85,247,0.2) 0%, rgba(99,102,241,0.2) 100%); border: 1px solid rgba(168,85,247,0.4); color: #c084fc; font-weight: 700; border-radius: 20px; padding: 4px 12px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+        🎬 Demo Flow
+      </button>
     </div>
   </header>
 
@@ -95,6 +99,7 @@
           <button class="quick-chip" data-input="JOT, balanced reminders">“JOT, balanced reminders”</button>
           <button class="quick-chip" data-input="Why didn't you remind me?">“Why didn't you remind me?”</button>
           <button class="quick-chip" data-input="Why did you pause?">“Why did you pause?”</button>
+          <button class="quick-chip" data-input="JOT, continue DBMS on laptop">“JOT, continue DBMS on laptop”</button>
         </div>
       </div>
 
@@ -447,6 +452,38 @@
         <p>Explicit continuity between your phone and laptop without background surveillance. Only structured session state crosses the bridge.</p>
       </div>
 
+      <!-- Stage 10 Visual Stepper: PHONE -> HANDOFF REQUEST -> AUTHENTICATED SYNC -> LAPTOP SESSION READY -->
+      <div id="bridge-pipeline-strip" class="bridge-pipeline-strip">
+        <div id="step-phone" class="bridge-step active">
+          <div class="bridge-step-dot">1</div>
+          <span>📱 Phone</span>
+        </div>
+        <span class="bridge-arrow">→</span>
+        <div id="step-request" class="bridge-step">
+          <div class="bridge-step-dot">2</div>
+          <span>⚡ Handoff Request</span>
+        </div>
+        <span class="bridge-arrow">→</span>
+        <div id="step-sync" class="bridge-step">
+          <div class="bridge-step-dot">3</div>
+          <span>🛡️ Authenticated Sync</span>
+        </div>
+        <span class="bridge-arrow">→</span>
+        <div id="step-ready" class="bridge-step">
+          <div class="bridge-step-dot">4</div>
+          <span>💻 Laptop Session Ready</span>
+        </div>
+      </div>
+
+      <!-- Failure Alert Banner -->
+      <div id="bridge-error-banner" class="bridge-error-banner">
+        <div style="font-size: 18px;">⚠️</div>
+        <div>
+          <div id="bridge-error-title" class="bridge-error-title">Sync Error</div>
+          <div id="bridge-error-desc" class="bridge-error-desc">Error details</div>
+        </div>
+      </div>
+
       <div class="bridge-layout">
 
         <!-- Mobile Phone Device Container -->
@@ -503,6 +540,30 @@
         </div>
 
       </div>
+
+      <!-- Interactive Failure Simulation Controls for Hackathon Demos -->
+      <div style="margin-top: 24px; padding: 18px 24px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
+        <div style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 8px;">
+          🧪 Hackathon Test Suite — Bridge Failure Handling & Rehearsal
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button id="demo-bridge-unauthorized" class="quick-chip" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171;">
+            Simulate Unauthorized Device
+          </button>
+          <button id="demo-bridge-expired" class="quick-chip" style="background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #fbbf24;">
+            Simulate Expired Session
+          </button>
+          <button id="demo-bridge-malformed" class="quick-chip" style="background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #c084fc;">
+            Simulate Malformed Payload
+          </button>
+          <button id="demo-bridge-offline" class="quick-chip" style="background: rgba(100,116,139,0.15); border-color: rgba(100,116,139,0.3); color: #94a3b8;">
+            Simulate Offline State
+          </button>
+          <button id="demo-bridge-reset" class="quick-chip" style="background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #34d399;">
+            Reset Bridge
+          </button>
+        </div>
+      </div>
     </section>
 
   </main>
@@ -524,6 +585,7 @@
   <script src="js/ui/memory-controller.js"></script>
   <script src="js/ui/privacy-controller.js"></script>
   <script src="js/ui/bridge-controller.js"></script>
+  <script src="js/ui/demo-controller.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

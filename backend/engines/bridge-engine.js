@@ -92,14 +92,14 @@ class BridgeEngine {
       };
     }
 
-    const target = (payload.targetDevice || '').toLowerCase();
+    const target = (options.targetDevice || payload.targetDevice || '').toLowerCase();
     const isAuthorizedTarget = this.authorizedDevices.some(d => d.toLowerCase() === target);
     if (!isAuthorizedTarget || (options.requirePairedSource && payload.sourceDevice !== this.deviceId)) {
       return {
         valid: false,
         error: {
           code: BridgeErrorCode.UNAUTHORIZED_DEVICE,
-          message: `Device "${payload.targetDevice || 'unknown'}" is not authorized or paired with this companion.`,
+          message: `Device "${target || 'unknown'}" is not authorized or paired with this companion.`,
         },
       };
     }

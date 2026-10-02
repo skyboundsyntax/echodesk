@@ -88,6 +88,9 @@ class EchoDeskApp {
     this.memoryController = new MemoryController(this);
     this.privacyController = new PrivacyController(this);
     this.bridgeController = new BridgeController(this);
+    if (typeof DemoController !== 'undefined') {
+      this.demoController = new DemoController(this);
+    }
 
     // Initial renders
     this.jotController.renderSessionState();

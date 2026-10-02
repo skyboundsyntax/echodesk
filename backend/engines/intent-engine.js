@@ -287,10 +287,34 @@ class IntentEngine {
 
   async process(input, sessionContext = {}, meta = {}) {
     const parsed = await this.aiProvider.parseIntent(input, sessionContext);
+
+    // Whitelist of allowed conversational and workflow intents
+    const VALID_INTENTS = new Set([
+      'START_WORK_SESSION', 'PAUSE_SESSION', 'RESUME_SESSION', 'STOP_SESSION',
+      'CORRECT_SESSION_TIME', 'UPDATE_CONTEXT', 'REQUEST_HANDOFF',
+      'SET_INTERVENTION_PREFERENCE', 'ASK_EXPLANATION', 'ASK_STATUS',
+      'FORGET_MEMORY', 'UNCERTAIN', 'UNKNOWN',
+    ]);
+
     const policyAction = this._mapIntentToPolicyAction(parsed.intent);
 
-    let policyCheck = { allowed: true, reason: 'No policy constraint' };
-    if (this.privacyGate && policyAction) {
+    let policyCheck = { allowed: true, reason: 'Benign intent authorized', code: 'ALLOW_BENIGN' };
+
+    if (!VALID_INTENTS.has(parsed.intent) || policyAction === PolicyActionType.DESKTOP_SURVEILLANCE) {
+      // Unrecognized action, hallucinated tool, or prohibited surveillance -> fail closed
+      if (this.privacyGate) {
+        policyCheck = this.privacyGate.evaluate(policyAction || parsed.intent, {
+          explicitUserGesture: meta.explicitUserGesture !== false,
+          explicitUserRequest: false,
+        });
+      } else {
+        policyCheck = {
+          allowed: false,
+          reason: `Unrecognized or prohibited action "${parsed.intent}". Failing closed.`,
+          code: 'DENY_UNKNOWN_ACTION',
+        };
+      }
+    } else if (this.privacyGate && policyAction) {
       policyCheck = this.privacyGate.evaluate(policyAction, {
         explicitUserGesture: meta.explicitUserGesture !== false,
         explicitUserRequest: true,
@@ -327,6 +351,15 @@ class IntentEngine {
       case 'CORRECT_SESSION_TIME': return PolicyActionType.CORRECT_TIME;
       case 'REQUEST_HANDOFF': return PolicyActionType.CROSS_DEVICE_HANDOFF;
       case 'FORGET_MEMORY': return PolicyActionType.DELETE_MEMORY;
+      case 'ACTIVATE_MIC': return PolicyActionType.ACTIVATE_MIC;
+      case 'ACTIVATE_CAMERA': return PolicyActionType.ACTIVATE_CAMERA;
+      case 'PROCESS_PRESENCE': return PolicyActionType.PROCESS_PRESENCE;
+      case 'DESKTOP_SURVEILLANCE':
+      case 'DESKTOP_INSPECTION':
+      case 'SILENT_APP_INVENTORY':
+      case 'ENUMERATE_OPEN_WINDOWS':
+        return PolicyActionType.DESKTOP_SURVEILLANCE;
+      case 'CLOUD_REASONING': return PolicyActionType.CLOUD_REASONING;
       default: return null;
     }
   }

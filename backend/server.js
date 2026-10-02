@@ -5,11 +5,14 @@
  */
 
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 const { WorkSession, WorkSessionState } = require('./core/session-state');
 const { PrivacyPolicyGate } = require('./core/privacy-gate');
 const { IntentEngine, DeterministicLocalProvider, GeminiInteractionsProvider } = require('./engines/intent-engine');
 const { EchoMemoryEngine } = require('./engines/memory-engine');
 const { FlowEngine, FlowDecision, CheckInType } = require('./engines/flow-engine');
+const { BridgeEngine, BridgeStage, BridgeErrorCode } = require('./engines/bridge-engine');
 
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '127.0.0.1';
@@ -22,9 +25,45 @@ const aiProvider = process.env.GEMINI_API_KEY
 const intentEngine = new IntentEngine({ aiProvider, privacyGate });
 const echoMemory = new EchoMemoryEngine({ privacyGate });
 const flowEngine = new FlowEngine();
+const bridgeEngine = new BridgeEngine({ privacyGate });
 
 let activeSession = new WorkSession();
-let pendingHandoff = null;
+
+const FRONTEND_DIR = path.resolve(__dirname, '../frontend');
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+};
+
+function serveStatic(req, res, pathname) {
+  const safePath = pathname === '/' ? '/index.html' : pathname;
+  const targetFile = path.normalize(path.join(FRONTEND_DIR, safePath));
+  if (!targetFile.startsWith(FRONTEND_DIR)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    return res.end('Access Denied');
+  }
+
+  fs.stat(targetFile, (err, stats) => {
+    if (err || !stats.isFile()) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: `Not found: ${pathname}` }));
+    }
+
+    const ext = path.extname(targetFile).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'no-cache',
+    });
+    fs.createReadStream(targetFile).pipe(res);
+  });
+}
 
 function sendJSON(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -71,6 +110,11 @@ const server = http.createServer(async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const path = url.pathname;
+
+  // Serve static frontend files (HTML, CSS, JS, Assets)
+  if (!path.startsWith('/api') && path !== '/health') {
+    return serveStatic(req, res, path);
+  }
 
   try {
     // 1. Health Check
@@ -255,23 +299,28 @@ const server = http.createServer(async (req, res) => {
     // 7. Cross-Device Bridge Endpoints (POST /api/bridge/handoff, GET /api/bridge/handoff)
     if (req.method === 'POST' && path === '/api/bridge/handoff') {
       const body = await parseBody(req);
-      const gateCheck = privacyGate.evaluate('CROSS_DEVICE_HANDOFF', { explicitUserRequest: true });
-      if (!gateCheck.allowed) {
-        return sendJSON(res, 403, { error: gateCheck.reason });
+      try {
+        const handoff = bridgeEngine.initiateHandoff(body.session || activeSession.toJSON(), body.targetDevice || 'laptop');
+        return sendJSON(res, 200, handoff);
+      } catch (err) {
+        return sendJSON(res, 403, { error: err.message, code: err.code || 'BRIDGE_ERROR' });
       }
-
-      pendingHandoff = {
-        handoffId: `hoff_${Date.now()}`,
-        timestamp: Date.now(),
-        sourceDevice: body.sourceDevice || 'phone',
-        targetDevice: 'laptop',
-        session: body.session || activeSession.toJSON(),
-      };
-      return sendJSON(res, 200, pendingHandoff);
     }
 
     if (req.method === 'GET' && path === '/api/bridge/handoff') {
-      return sendJSON(res, 200, pendingHandoff || { message: 'No pending handoff' });
+      try {
+        const callerDevice = req.headers['x-device-id'] || url.searchParams.get('deviceId') || 'laptop';
+        const handoff = bridgeEngine.receiveHandoff({ targetDevice: callerDevice });
+        return sendJSON(res, 200, handoff || { message: 'No pending handoff' });
+      } catch (err) {
+        const status = err.code === 'UNAUTHORIZED_DEVICE' ? 403 : 400;
+        return sendJSON(res, status, { error: err.message, code: err.code || 'BRIDGE_ERROR' });
+      }
+    }
+
+    if (req.method === 'DELETE' && path === '/api/bridge/handoff') {
+      bridgeEngine.clearHandoff();
+      return sendJSON(res, 200, { message: 'Handoff cleared' });
     }
 
     // Fallthrough 404
@@ -289,4 +338,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { server, activeSession, privacyGate, intentEngine, echoMemory, flowEngine, FlowDecision, CheckInType };
+module.exports = { server, activeSession, privacyGate, intentEngine, echoMemory, flowEngine, bridgeEngine, FlowDecision, CheckInType, BridgeStage, BridgeErrorCode };

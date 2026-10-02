@@ -32,6 +32,7 @@ class PrivacyPolicyGate {
       rawAudioRetention: false, // Strictly OFF
       rawVideoRetention: false, // Strictly OFF
       desktopInspectionAllowed: false, // Strictly OFF
+      silentInventoryAllowed: false, // Strictly OFF
       ...initialPermissions,
     };
     this.auditLog = [];
@@ -44,6 +45,7 @@ class PrivacyPolicyGate {
       rawAudioRetention: false,
       rawVideoRetention: false,
       desktopInspectionAllowed: false,
+      silentInventoryAllowed: false,
     };
     return this.permissions;
   }
@@ -57,6 +59,9 @@ class PrivacyPolicyGate {
 
     switch (actionType) {
       case PolicyActionType.DESKTOP_SURVEILLANCE:
+      case 'DESKTOP_INSPECTION':
+      case 'SILENT_APP_INVENTORY':
+      case 'ENUMERATE_OPEN_WINDOWS':
         result = {
           allowed: false,
           reason: 'Desktop surveillance and silent application inventory are strictly prohibited by ECHODESK privacy policy.',

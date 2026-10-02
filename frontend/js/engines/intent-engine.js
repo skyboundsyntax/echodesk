@@ -30,12 +30,37 @@ class IntentEngine {
     // 1. Parse structured intent via configured provider
     const parsed = await this.aiProvider.parseIntent(input, sessionContext);
 
+    // Whitelist of allowed conversational and workflow intents
+    const VALID_INTENTS = new Set([
+      'START_WORK_SESSION', 'PAUSE_SESSION', 'RESUME_SESSION', 'STOP_SESSION',
+      'CORRECT_SESSION_TIME', 'UPDATE_CONTEXT', 'REQUEST_HANDOFF',
+      'SET_INTERVENTION_PREFERENCE', 'ASK_EXPLANATION', 'ASK_STATUS',
+      'FORGET_MEMORY', 'UNCERTAIN', 'UNKNOWN',
+    ]);
+
     // 2. Map intent to PolicyActionType for gate verification
     const policyAction = this._mapIntentToPolicyAction(parsed.intent);
 
-    // 3. Evaluate against PrivacyPolicyGate
-    let policyCheck = { allowed: true, reason: 'No policy constraint' };
-    if (this.privacyGate && policyAction) {
+    // 3. Evaluate against PrivacyPolicyGate with fail-closed default
+    let policyCheck = { allowed: true, reason: 'Benign intent authorized', code: 'ALLOW_BENIGN' };
+
+    const isSurveillance = policyAction === 'DESKTOP_SURVEILLANCE' ||
+      (typeof window !== 'undefined' && window.PolicyActionType && policyAction === window.PolicyActionType.DESKTOP_SURVEILLANCE);
+
+    if (!VALID_INTENTS.has(parsed.intent) || isSurveillance) {
+      if (this.privacyGate) {
+        policyCheck = this.privacyGate.evaluate(policyAction || parsed.intent, {
+          explicitUserGesture: meta.explicitUserGesture !== false,
+          explicitUserRequest: false,
+        });
+      } else {
+        policyCheck = {
+          allowed: false,
+          reason: `Unrecognized or prohibited action "${parsed.intent}". Failing closed.`,
+          code: 'DENY_UNKNOWN_ACTION',
+        };
+      }
+    } else if (this.privacyGate && policyAction) {
       policyCheck = this.privacyGate.evaluate(policyAction, {
         explicitUserGesture: meta.explicitUserGesture !== false,
         explicitUserRequest: true,
@@ -69,8 +94,11 @@ class IntentEngine {
   }
 
   _mapIntentToPolicyAction(intent) {
-    if (typeof window !== 'undefined' && window.PolicyActionType) {
-      const PAT = window.PolicyActionType;
+    const PAT = (typeof window !== 'undefined' && window.PolicyActionType)
+      ? window.PolicyActionType
+      : (typeof PolicyActionType !== 'undefined' ? PolicyActionType : null);
+
+    if (PAT) {
       switch (intent) {
         case 'START_WORK_SESSION': return PAT.START_SESSION;
         case 'PAUSE_SESSION': return PAT.PAUSE_SESSION;
@@ -79,6 +107,15 @@ class IntentEngine {
         case 'CORRECT_SESSION_TIME': return PAT.CORRECT_TIME;
         case 'REQUEST_HANDOFF': return PAT.CROSS_DEVICE_HANDOFF;
         case 'FORGET_MEMORY': return PAT.DELETE_MEMORY;
+        case 'ACTIVATE_MIC': return PAT.ACTIVATE_MIC;
+        case 'ACTIVATE_CAMERA': return PAT.ACTIVATE_CAMERA;
+        case 'PROCESS_PRESENCE': return PAT.PROCESS_PRESENCE;
+        case 'DESKTOP_SURVEILLANCE':
+        case 'DESKTOP_INSPECTION':
+        case 'SILENT_APP_INVENTORY':
+        case 'ENUMERATE_OPEN_WINDOWS':
+          return PAT.DESKTOP_SURVEILLANCE;
+        case 'CLOUD_REASONING': return PAT.CLOUD_REASONING;
         default: return null;
       }
     }

@@ -64,6 +64,7 @@ $expectedFiles = @(
     "tests/camera-presence.test.js",
     "tests/smart-checkins.test.js",
     "tests/privacy-center.test.js",
+    "tests/cross-device-bridge.test.js",
     "tests/integration.test.js"
 )
 
@@ -182,28 +183,135 @@ Assert-True ($privCtrlContent.Contains('clearSessionBtn')) "PrivacyController: C
 Assert-True ($privCtrlContent.Contains('clearMemoryBtn')) "PrivacyController: Delete memory action wired"
 
 # 10. Stage 10 Cross-Device Bridge
-Write-Host "`n10. Verifying Stage 10: Cross-Device Bridge..." -ForegroundColor Yellow
+Write-Host "`n10. Verifying Stage 10: Cross-Device Bridge & Continuity..." -ForegroundColor Yellow
 $bridgeFileContent = Get-Content (Join-Path $PSScriptRoot "..\js\engines\bridge-engine.js") -Raw
 Assert-True ($bridgeFileContent.Contains('initiateHandoff')) "BridgeEngine implements initiateHandoff"
 Assert-True ($bridgeFileContent.Contains('receiveHandoff')) "BridgeEngine implements receiveHandoff"
 Assert-True ($bridgeFileContent.Contains('CROSS_DEVICE_HANDOFF')) "BridgeEngine evaluates CROSS_DEVICE_HANDOFF in policy gate"
+Assert-True ($bridgeFileContent.Contains('HANDOFF_REQUEST') -and $bridgeFileContent.Contains('AUTHENTICATED_SYNC') -and $bridgeFileContent.Contains('LAPTOP_SESSION_READY')) "BridgeEngine tracks all 4 pipeline stages"
+Assert-True ($bridgeFileContent.Contains('UNAUTHORIZED_DEVICE') -and $bridgeFileContent.Contains('EXPIRED_SESSION') -and $bridgeFileContent.Contains('MALFORMED_PAYLOAD') -and $bridgeFileContent.Contains('OFFLINE_STATE')) "BridgeEngine implements all 4 failure handling modes"
 
-# 11. No Hardcoded Secrets Verification
-Write-Host "`n11. Checking for Hardcoded Secrets across Codebase..." -ForegroundColor Yellow
+$backendBridgeFile = Join-Path $PSScriptRoot "..\..\backend\engines\bridge-engine.js"
+if (Test-Path $backendBridgeFile) {
+    $backendBridgeContent = Get-Content $backendBridgeFile -Raw
+    Assert-True ($backendBridgeContent.Contains('class BridgeEngine')) "Backend BridgeEngine implemented"
+    Assert-True ($backendBridgeContent.Contains('BridgeErrorCode')) "Backend BridgeErrorCode implemented"
+}
+
+Assert-True ($htmlContent.Contains('bridge-pipeline-strip')) "Visual pipeline stepper container present"
+Assert-True ($htmlContent.Contains('step-ready')) "Pipeline step 4 (Laptop Session Ready) present"
+Assert-True ($htmlContent.Contains('bridge-error-banner')) "Bridge error banner present"
+Assert-True ($htmlContent.Contains('demo-bridge-unauthorized')) "Failure simulation: Unauthorized Device present"
+Assert-True ($htmlContent.Contains('demo-bridge-offline')) "Failure simulation: Offline State present"
+
+# 11. Stage 11: Security & Robustness Pass
+Write-Host "`n11. Verifying Stage 11 Security & Robustness Pass..." -ForegroundColor Yellow
+
+# 11.1 Zero Hardcoded Secrets & Environment Protection
 $allJsFiles = Get-ChildItem (Join-Path $PSScriptRoot "..\js") -Filter "*.js" -Recurse
 $hasSecret = $false
 foreach ($js in $allJsFiles) {
     $content = Get-Content $js.FullName -Raw
-    if ($content -match 'AIzaSy[A-Za-z0-9_-]{30}' -or $content -match 'sk-[A-Za-z0-9_-]{30}') {
+    if ($content -match 'AIzaSy[A-Za-z0-9_-]{30}' -or $content -match 'sk-[A-Za-z0-9_-]{30}' -or $content -match 'ghp_[A-Za-z0-9_-]{30}') {
         $hasSecret = $true
         Write-Host "  [FAIL] Potential hardcoded API key found in $($js.Name)" -ForegroundColor Red
         $script:FailCount++
     }
 }
 if (-not $hasSecret) {
-    Write-Host "  [PASS] Zero hardcoded API keys found across codebase" -ForegroundColor Green
+    Write-Host "  [PASS] Zero hardcoded API keys found across frontend codebase" -ForegroundColor Green
     $script:PassCount++
 }
+
+$rootPath = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+$gitignoreFile = Join-Path $rootPath ".gitignore"
+Assert-True (Test-Path $gitignoreFile) ".gitignore exists in repository root"
+if (Test-Path $gitignoreFile) {
+    $giContent = Get-Content $gitignoreFile -Raw
+    Assert-True ($giContent.Contains('.env')) ".gitignore excludes .env files"
+    Assert-True ($giContent.Contains('node_modules')) ".gitignore excludes node_modules"
+    Assert-True ($giContent.Contains('*.log')) ".gitignore excludes log files"
+}
+
+$envExFile = Join-Path $rootPath "backend\.env.example"
+Assert-True (Test-Path $envExFile) "backend/.env.example exists with placeholder configuration"
+
+# 11.2 Hard Policy Locks & Fail-Closed Gate
+$gateFile = Join-Path $PSScriptRoot "..\js\engines\privacy-gate.js"
+if (Test-Path $gateFile) {
+    $gateCode = Get-Content $gateFile -Raw
+    Assert-True ($gateCode.Contains('rawAudioRetention: false')) "PrivacyPolicyGate hard-locks rawAudioRetention: false"
+    Assert-True ($gateCode.Contains('rawVideoRetention: false')) "PrivacyPolicyGate hard-locks rawVideoRetention: false"
+    Assert-True ($gateCode.Contains('desktopInspectionAllowed: false')) "PrivacyPolicyGate hard-locks desktopInspectionAllowed: false"
+    Assert-True ($gateCode.Contains('silentInventoryAllowed: false')) "PrivacyPolicyGate hard-locks silentInventoryAllowed: false"
+    Assert-True ($gateCode.Contains('DENY_PROHIBITED_FEATURE')) "PrivacyPolicyGate enforces DENY_PROHIBITED_FEATURE on desktop surveillance"
+    Assert-True ($gateCode.Contains('DENY_UNKNOWN_ACTION')) "PrivacyPolicyGate fails closed with DENY_UNKNOWN_ACTION"
+}
+
+# 11.3 AI Tool Authorization & Prompt Injection Boundaries
+$intentEngineFile = Join-Path $PSScriptRoot "..\js\engines\intent-engine.js"
+if (Test-Path $intentEngineFile) {
+    $intentCode = Get-Content $intentEngineFile -Raw
+    Assert-True ($intentCode.Contains('VALID_INTENTS')) "IntentEngine validates AI tool authorization against whitelist"
+    Assert-True ($intentCode.Contains('DENY_UNKNOWN_ACTION')) "IntentEngine fails closed on unknown or hallucinated tools"
+}
+
+# 11.4 Raw Sensor Exclusion & Sensor Scoping
+$camSensorFile = Join-Path $PSScriptRoot "..\js\sensors\camera-presence.js"
+if (Test-Path $camSensorFile) {
+    $camCode = Get-Content $camSensorFile -Raw
+    Assert-True ($camCode.Contains('imgData')) "CameraPresenceSensor uses local thumbnail diffing"
+    Assert-True ($camCode.Contains('lastFrameData')) "CameraPresenceSensor discards raw frames immediately"
+}
+
+$voiceSensorFile = Join-Path $PSScriptRoot "..\js\sensors\voice-input.js"
+if (Test-Path $voiceSensorFile) {
+    $voiceCode = Get-Content $voiceSensorFile -Raw
+    Assert-True ($voiceCode.Contains('explicitUserGesture')) "VoiceInput enforces explicit push-to-talk user gesture"
+    Assert-True ($voiceCode.Contains('continuous = false')) "VoiceInput runs strictly non-continuous without background recording"
+}
+
+# 11.5 Claims Audit & Disclaimers
+$flowEngineFile = Join-Path $PSScriptRoot "..\js\engines\flow-engine.js"
+if (Test-Path $flowEngineFile) {
+    $flowCode = Get-Content $flowEngineFile -Raw
+    Assert-True ($flowCode.Contains('DISCLAIMER')) "FlowEngine defines formal product disclaimer"
+    Assert-True ($flowCode.Contains('product flow-support policy engine')) "Disclaimer clarifies product policy engine"
+    Assert-True ($flowCode.Contains('does not claim psychological or medical flow state measurement')) "Disclaimer rejects psychological/medical claims"
+}
+
+# 12. Stage 12: Demo Polish & Live Hackathon Rehearsal
+Write-Host "`n12. Verifying Stage 12 Live Hackathon Demo Polish..." -ForegroundColor Yellow
+$demoCssFile = Join-Path $PSScriptRoot "..\css\demo.css"
+Assert-True (Test-Path $demoCssFile) "frontend/css/demo.css exists"
+
+$demoJsFile = Join-Path $PSScriptRoot "..\js\ui\demo-controller.js"
+Assert-True (Test-Path $demoJsFile) "frontend/js/ui/demo-controller.js exists"
+
+Assert-True ($htmlContent.Contains('demo.css')) "demo.css included in index.html"
+Assert-True ($htmlContent.Contains('btn-open-demo-modal')) "Header demo trigger present"
+Assert-True ($htmlContent.Contains('demo-controller.js')) "demo-controller.js included in index.html"
+Assert-True ($htmlContent.Contains('JOT, continue DBMS on laptop')) "Handoff quick-chip present"
+
+if (Test-Path $demoJsFile) {
+    $demoCode = Get-Content $demoJsFile -Raw
+    Assert-True ($demoCode.Contains('Hey JOT, studying DBMS')) "Demo Step 1: 'Hey JOT, studying DBMS' defined"
+    Assert-True ($demoCode.Contains('Zen session starts')) "Demo Step 2: Zen session starts defined"
+    Assert-True ($demoCode.Contains('25-minute Pomodoro mark passes')) "Demo Step 3: 25m Pomodoro threshold flow protection defined"
+    Assert-True ($demoCode.Contains('User walks away from desk')) "Demo Step 4: User steps away defined"
+    Assert-True ($demoCode.Contains('FlowEngine evaluates sustained absence')) "Demo Step 5: Possible pause detected defined"
+    Assert-True ($demoCode.Contains('Pause DBMS?')) "Demo Step 6: JOT asks to pause defined"
+    Assert-True ($demoCode.Contains('Hydration Reset')) "Demo Step 7: Natural check-in defined"
+    Assert-True ($demoCode.Contains('User returns to desk')) "Demo Step 8: User returns defined"
+    Assert-True ($demoCode.Contains('Normalization')) "Demo Step 9: JOT restores DBMS / Q5 context defined"
+    Assert-True ($demoCode.Contains('Laptop Handoff')) "Demo Step 10: Phone to laptop handoff defined"
+    Assert-True ($demoCode.Contains('Privacy Center')) "Demo Step 11: ECHOSHIELD Privacy Center defined"
+    Assert-True ($demoCode.Contains('startAutoPlay')) "Demo auto-play tour implemented"
+    Assert-True ($demoCode.Contains('resetDemo')) "Demo full reset implemented"
+}
+
+$backendDemoTest = Join-Path $PSScriptRoot "..\..\backend\tests\step12-demo.test.js"
+Assert-True (Test-Path $backendDemoTest) "backend/tests/step12-demo.test.js exists"
 
 # Summary
 $summaryColor = if ($FailCount -eq 0) { "Green" } else { "Red" }
@@ -212,3 +320,4 @@ Write-Host " Master Test Summary: $PassCount PASSED, $FailCount FAILED " -Foregr
 Write-Host "=================================================================" -ForegroundColor Cyan
 
 if ($FailCount -gt 0) { exit 1 } else { exit 0 }
+
