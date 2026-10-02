@@ -63,6 +63,7 @@ $expectedFiles = @(
     "tests/voice-input.test.js",
     "tests/camera-presence.test.js",
     "tests/smart-checkins.test.js",
+    "tests/privacy-center.test.js",
     "tests/integration.test.js"
 )
 
@@ -161,15 +162,34 @@ $htmlContent = Get-Content (Join-Path $PSScriptRoot "..\index.html") -Raw
 Assert-True ($htmlContent.Contains('zen-checkin-card')) "Zen Mode check-in card container present"
 Assert-True ($htmlContent.Contains('zen-checkin-accept-btn')) "Zen check-in accept action present"
 
-# 9. Stage 10 Cross-Device Bridge
-Write-Host "`n9. Verifying Stage 10: Cross-Device Bridge..." -ForegroundColor Yellow
+# 9. Stage 9 Privacy Center & ECHOSHIELD
+Write-Host "`n9. Verifying Stage 9: Privacy Center & ECHOSHIELD..." -ForegroundColor Yellow
+$gateContent = Get-Content (Join-Path $PSScriptRoot "..\js\engines\privacy-gate.js") -Raw
+Assert-True ($htmlContent.Contains('priv-toggle-mic')) "Privacy Center: Mic status toggle present"
+Assert-True ($htmlContent.Contains('priv-toggle-camera')) "Privacy Center: Camera status toggle present"
+Assert-True ($htmlContent.Contains('priv-toggle-memory')) "Privacy Center: Memory status toggle present"
+Assert-True ($htmlContent.Contains('LOCAL ONLY')) "Privacy Center: Local processing badge present"
+Assert-True ($htmlContent.Contains('STRICTLY OFF')) "Privacy Center: Raw recording retention locked badge present"
+Assert-True ($htmlContent.Contains('STRICTLY DENIED')) "Privacy Center: Laptop monitoring blocked badge present"
+Assert-True ($htmlContent.Contains('btn-disable-sensors')) "Privacy Center: Disable all sensors button present"
+Assert-True ($htmlContent.Contains('btn-clear-session')) "Privacy Center: Clear active session button present"
+Assert-True ($htmlContent.Contains('btn-clear-memory')) "Privacy Center: Delete memory button present"
+Assert-True ($htmlContent.Contains('privacy-audit-tbody')) "Privacy Center: Live audit table stream present"
+
+$privCtrlContent = Get-Content (Join-Path $PSScriptRoot "..\js\ui\privacy-controller.js") -Raw
+Assert-True ($privCtrlContent.Contains('disableSensorsBtn')) "PrivacyController: Disable sensors action wired"
+Assert-True ($privCtrlContent.Contains('clearSessionBtn')) "PrivacyController: Clear session action wired"
+Assert-True ($privCtrlContent.Contains('clearMemoryBtn')) "PrivacyController: Delete memory action wired"
+
+# 10. Stage 10 Cross-Device Bridge
+Write-Host "`n10. Verifying Stage 10: Cross-Device Bridge..." -ForegroundColor Yellow
 $bridgeFileContent = Get-Content (Join-Path $PSScriptRoot "..\js\engines\bridge-engine.js") -Raw
 Assert-True ($bridgeFileContent.Contains('initiateHandoff')) "BridgeEngine implements initiateHandoff"
 Assert-True ($bridgeFileContent.Contains('receiveHandoff')) "BridgeEngine implements receiveHandoff"
 Assert-True ($bridgeFileContent.Contains('CROSS_DEVICE_HANDOFF')) "BridgeEngine evaluates CROSS_DEVICE_HANDOFF in policy gate"
 
-# 10. No Hardcoded Secrets Verification
-Write-Host "`n10. Checking for Hardcoded Secrets across Codebase..." -ForegroundColor Yellow
+# 11. No Hardcoded Secrets Verification
+Write-Host "`n11. Checking for Hardcoded Secrets across Codebase..." -ForegroundColor Yellow
 $allJsFiles = Get-ChildItem (Join-Path $PSScriptRoot "..\js") -Filter "*.js" -Recurse
 $hasSecret = $false
 foreach ($js in $allJsFiles) {

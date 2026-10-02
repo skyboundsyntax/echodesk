@@ -17,6 +17,9 @@ class PrivacyController {
     this.cloudToggle = document.getElementById('priv-toggle-cloud');
     this.auditTableBody = document.getElementById('privacy-audit-tbody');
     this.purgeAllBtn = document.getElementById('btn-purge-all-data');
+    this.disableSensorsBtn = document.getElementById('btn-disable-sensors');
+    this.clearSessionBtn = document.getElementById('btn-clear-session');
+    this.clearMemoryBtn = document.getElementById('btn-clear-memory');
     this.apiKeyInput = document.getElementById('gemini-api-key-input');
     this.saveApiKeyBtn = document.getElementById('btn-save-api-key');
     this.flowSelect = document.getElementById('priv-select-flow');
@@ -41,6 +44,44 @@ class PrivacyController {
     if (this.cloudToggle) {
       this.cloudToggle.addEventListener('change', (e) => {
         window.privacyGate.savePermissions({ cloudReasoningAllowed: e.target.checked });
+      });
+    }
+
+    if (this.disableSensorsBtn) {
+      this.disableSensorsBtn.addEventListener('click', () => {
+        if (window.privacyGate) {
+          window.privacyGate.savePermissions({ micEnabled: false, cameraEnabled: false });
+        }
+        if (this.app.voiceInput && this.app.voiceInput.isListening) {
+          this.app.voiceInput.stopListening();
+        }
+        if (this.app.cameraPresence && this.app.cameraPresence.isActive) {
+          this.app.cameraPresence.stop();
+        }
+        this.renderToggles();
+        alert('All sensors disabled. Microphone and camera access revoked.');
+      });
+    }
+
+    if (this.clearSessionBtn) {
+      this.clearSessionBtn.addEventListener('click', () => {
+        if (this.app.session) {
+          this.app.stopSession('Cleared by user in Privacy Center');
+          this.app.session = new WorkSession({ eventBus: this.app.events });
+          if (this.app.jotController) this.app.jotController.renderSessionState();
+          if (this.app.zenController) this.app.zenController.render();
+          alert('Active work session cleared. State reset to IDLE.');
+        }
+      });
+    }
+
+    if (this.clearMemoryBtn) {
+      this.clearMemoryBtn.addEventListener('click', () => {
+        if (window.echoMemory) {
+          window.echoMemory.clearAll();
+          if (this.app.memoryController) this.app.memoryController.render();
+          alert('All stored Echo memories were permanently deleted.');
+        }
       });
     }
 

@@ -272,7 +272,20 @@
         </div>
       </div>
 
-      <!-- 6 Privacy Settings Cards -->
+      <!-- Privacy Quick Control Strip -->
+      <div class="privacy-quick-actions" style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+        <button id="btn-disable-sensors" class="btn-ctrl" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #f87171;">
+          🚫 Disable All Sensors
+        </button>
+        <button id="btn-clear-session" class="btn-ctrl" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #fbbf24;">
+          ⏹ Clear Active Session
+        </button>
+        <button id="btn-clear-memory" class="btn-ctrl" style="background: rgba(56, 189, 248, 0.1); border-color: rgba(56, 189, 248, 0.3); color: #38bdf8;">
+          🧠 Clear Echo Memories
+        </button>
+      </div>
+
+      <!-- 8 Privacy Settings Cards -->
       <div class="privacy-grid">
 
         <!-- 1. Microphone -->
@@ -305,7 +318,22 @@
           <span style="font-size: 11px; color: var(--text-secondary);">Minimal signal (present/absent) • Frame discarded</span>
         </div>
 
-        <!-- 3. Local Sensing -->
+        <!-- 3. Echo Memory Creation -->
+        <div class="privacy-card">
+          <div class="privacy-card-header">
+            <div class="privacy-card-info">
+              <h3>🧠 Echo Memory Context</h3>
+              <p class="privacy-card-desc">Allows JOT to remember work context across sessions. When off, no new memories are recorded.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="priv-toggle-memory" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <span style="font-size: 11px; color: #38bdf8;">Structured session context only • Zero raw data</span>
+        </div>
+
+        <!-- 4. Local Sensing -->
         <div class="privacy-card">
           <div class="privacy-card-header">
             <div class="privacy-card-info">
