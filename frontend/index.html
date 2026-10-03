@@ -6,10 +6,10 @@
   <title>ECHODESK — Powered by JOT | Privacy-First AI Workspace</title>
   <meta name="description" content="Privacy-first AI productivity workspace powered by JOT. JOT your intent. Less managing. More doing. Zero passive surveillance.">
 
-  <!-- Typography: Inter & JetBrains Mono -->
+  <!-- Typography: Syne, Space Grotesk, Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 
   <!-- Core Stylesheets -->
   <link rel="stylesheet" href="css/design-tokens.css">
@@ -43,7 +43,7 @@
     <!-- Real-time Privacy & Sensor Indicators -->
     <div class="status-indicators">
       <div id="pill-flow-preference" class="sensor-pill" title="Adaptive Intervention Policy: Flow protection active">
-        <span class="dot" style="background: #22d3ee;"></span>
+        <span class="dot" style="background: var(--primary);"></span>
         <span id="pill-flow-text" class="pill-text">Flow: Minimal (Quiet)</span>
       </div>
       <div id="pill-sensor-mic" class="sensor-pill">
@@ -58,7 +58,7 @@
         <span class="dot"></span>
         <span>Monitoring: OFF</span>
       </div>
-      <button id="btn-open-demo-modal" class="btn-ctrl" style="background: linear-gradient(135deg, rgba(168,85,247,0.2) 0%, rgba(99,102,241,0.2) 100%); border: 1px solid rgba(168,85,247,0.4); color: #c084fc; font-weight: 700; border-radius: 20px; padding: 4px 12px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+      <button id="btn-open-demo-modal" class="btn-ctrl" style="background: rgba(255,107,24,0.12); border: 1px solid rgba(255,107,24,0.4); color: var(--primary); font-weight: 700; border-radius: var(--radius-xs); padding: 5px 12px; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
         🎬 Demo Flow
       </button>
     </div>
@@ -244,11 +244,11 @@
       </div>
 
       <!-- Resumption Greeting Card -->
-      <div class="feed-card" style="margin-bottom: 20px; border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.05);">
-        <div class="feed-icon" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">✨</div>
+      <div class="feed-card" style="margin-bottom: 20px; border-color: rgba(255, 107, 24, 0.4); background: rgba(255, 107, 24, 0.05);">
+        <div class="feed-icon" style="background: rgba(255, 107, 24, 0.15); color: var(--primary);">⚡</div>
         <div class="feed-content">
           <div class="feed-header">
-            <span class="feed-intent-name" style="color: #38bdf8;">Context Restoration on Return</span>
+            <span class="feed-intent-name" style="color: var(--primary);">Context Restoration on Return</span>
             <span class="feed-time">Active Policy</span>
           </div>
           <div id="memory-resume-greeting" class="feed-desc" style="font-size: 15px; font-weight: 600; color: #fff;">
@@ -516,7 +516,7 @@
             <span class="device-status">AUTHENTICATED</span>
           </div>
 
-          <div id="bridge-laptop-box" class="handoff-state-box" style="display: none; border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.04);">
+          <div id="bridge-laptop-box" class="handoff-state-box" style="display: none; border-color: rgba(255, 107, 24, 0.4); background: rgba(255, 107, 24, 0.04);">
             <div style="font-size: 11px; text-transform: uppercase; color: var(--primary); font-weight: 700; margin-bottom: 4px;">
               ⚡ JOT SESSION READY
             </div>
@@ -524,7 +524,7 @@
             <div id="bridge-laptop-meta" class="handoff-meta">Q5 — Normalization (Synced from phone)</div>
             <div id="bridge-laptop-timer" class="handoff-timer">00:00</div>
             
-            <button id="btn-laptop-resume" class="handoff-action-btn" style="margin-top: 14px; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);">
+            <button id="btn-laptop-resume" class="handoff-action-btn" style="margin-top: 14px; background: linear-gradient(135deg, #00f0a0 0%, #10b981 100%); color: #090b10;">
               Continue DBMS on Laptop
             </button>
           </div>

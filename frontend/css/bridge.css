@@ -1,26 +1,32 @@
 /**
  * ECHODESK — Cross-Device Bridge Stylesheet
- * Demonstrates phone-to-laptop session handoff and continuity without surveillance.
+ * Editorial Brutalist / Industrial Precision aesthetic.
+ * Schematic hardware bridge, numbered circuit-step pipeline, and hardware handoff controls.
  */
 
 .bridge-header-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: 24px 28px;
+  border-radius: var(--radius-sm);
+  padding: 28px 32px;
   margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
 }
 
 .bridge-header-card h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
 }
 
 .bridge-header-card p {
+  font-family: var(--font-heading);
   font-size: 13px;
   color: var(--text-secondary);
+  line-height: 1.45;
 }
 
 .bridge-layout {
@@ -39,8 +45,8 @@
 .device-mockup-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: 24px;
+  border-radius: var(--radius-sm);
+  padding: 26px;
   box-shadow: var(--shadow-md);
   position: relative;
 }
@@ -49,78 +55,95 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .device-title {
+  font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  color: #ffffff;
   display: flex;
   align-items: center;
   gap: 8px;
+  letter-spacing: 0.02em;
 }
 
 .device-status {
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  background: rgba(0, 240, 160, 0.12);
+  color: var(--status-active);
+  border: 1px solid rgba(0, 240, 160, 0.35);
+  letter-spacing: 0.06em;
 }
 
 .handoff-state-box {
   background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  margin-bottom: 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xs);
+  padding: 20px;
+  margin-bottom: 18px;
 }
 
 .handoff-context-name {
-  font-size: 18px;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
   color: var(--primary);
   margin-bottom: 4px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 .handoff-meta {
-  font-size: 13px;
+  font-family: var(--font-mono);
+  font-size: 12px;
   color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
 .handoff-timer {
   font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
+  font-size: 28px;
+  font-weight: 800;
+  color: #ffffff;
   margin-top: 8px;
+  font-variant-numeric: tabular-nums;
 }
 
 .handoff-action-btn {
   width: 100%;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  border: none;
+  padding: 13px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--primary);
   background: var(--primary-gradient);
-  color: #fff;
-  font-weight: 600;
-  font-size: 14px;
+  color: #090b10;
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  box-shadow: 0 4px 14px var(--primary-glow);
-  transition: opacity var(--transition-fast);
+  box-shadow: 0 4px 16px var(--primary-glow);
+  transition: all var(--transition-fast);
 }
 
 .handoff-action-btn:hover {
-  opacity: 0.92;
+  filter: brightness(1.1);
+  color: #000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 107, 24, 0.45);
 }
 
 .bridge-policy-note {
-  margin-top: 14px;
+  margin-top: 16px;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--text-muted);
   display: flex;
@@ -132,9 +155,9 @@
 .bridge-pipeline-strip {
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
-  border-radius: var(--radius-xl);
-  padding: 16px 24px;
-  margin-bottom: 24px;
+  border-radius: var(--radius-xs);
+  padding: 18px 26px;
+  margin-bottom: 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -146,6 +169,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: var(--font-heading);
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
@@ -157,12 +181,13 @@
 .bridge-step-dot {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: var(--radius-xs);
   background: var(--bg-surface-elevated);
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   justify-content: center;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
   color: var(--text-secondary);
@@ -174,36 +199,37 @@
 }
 
 .bridge-step.active .bridge-step-dot {
-  background: var(--primary-gradient);
+  background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: #090b10;
   box-shadow: 0 0 12px var(--primary-glow);
 }
 
 .bridge-step.completed {
-  opacity: 0.9;
-  color: #34d399;
+  opacity: 0.95;
+  color: var(--status-active);
 }
 
 .bridge-step.completed .bridge-step-dot {
-  background: rgba(16, 185, 129, 0.2);
-  border-color: #10b981;
-  color: #34d399;
+  background: rgba(0, 240, 160, 0.2);
+  border-color: var(--status-active);
+  color: var(--status-active);
 }
 
 .bridge-arrow {
-  color: var(--text-muted);
+  color: var(--border-light);
+  font-family: var(--font-mono);
   font-size: 14px;
-  opacity: 0.4;
 }
 
 /* Failure Alert Banner */
 .bridge-error-banner {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: var(--radius-lg);
-  padding: 14px 18px;
-  margin-bottom: 20px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-xs);
+  padding: 14px 20px;
+  margin-bottom: 22px;
   display: none;
   align-items: flex-start;
   gap: 12px;
@@ -214,15 +240,17 @@
 }
 
 .bridge-error-title {
+  font-family: var(--font-heading);
   font-size: 13px;
   font-weight: 700;
-  color: #f87171;
+  color: #fca5a5;
   margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .bridge-error-desc {
   font-size: 12px;
-  color: #fca5a5;
+  color: #fee2e2;
   line-height: 1.4;
 }
-
