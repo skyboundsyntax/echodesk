@@ -31,8 +31,27 @@ class DeterministicLocalProvider extends AIProvider {
       return { intent: 'UNKNOWN', confidence: 0.0, explanation: 'Empty or invalid input.' };
     }
 
-    const clean = input.trim();
-    const lower = clean.toLowerCase().replace(/^(hey jot|jot|ok jot)[,\s]*/i, '').trim();
+    let clean = input.trim();
+    clean = clean.replace(/[.,!?;:]+$/, '').trim();
+    clean = clean.replace(/\b(?:j\.?\s*o\.?\s*t\.?|jay\s*(?:o|oh)\s*tee|j-o-t)\b/gi, 'JOT');
+
+    const normalized = clean
+      .replace(/^(?:hey|hi|ok|okay|a|eight|hate)\s+(?:jot|john|job|josh|jock|joy|chat|judge|george|shot|dot|yacht|chuck|jar|jaw|doc|jack|just|jaunt|jott|jatt|judd|jake|jaat|jolt|joint|jump|junk|jug|chad|geoff|jeff)\b/i, 'Hey JOT')
+      .replace(/^(?:jot|john|job|josh|jock|chat|judge|shot|dot|yacht|jott|jatt)\s*([,:]|\s+(?:studying|working|pause|stop|resume|continue|less|more|balanced|why|what|status|i\s+stopped|forget))\b/i, 'JOT, $2');
+
+    let lower = normalized.toLowerCase().replace(/^(hey jot|jot|ok jot)[,\s.]*/i, '').trim();
+    lower = lower.replace(/^[.,!?;:\s]+|[.,!?;:\s]+$/g, '').trim();
+
+    // 0. Standalone Wake / Greeting / Status ("Hey JOT", "JOT", "J.O.T", "Hi JOT", "Hello JOT", or empty after strip)
+    const isBareWakeWord = /^(?:jot|j\.?o\.?t\.?|hey\s+jot|ok\s+jot|hi\s+jot|hello\s+jot|john|job|chat|shot|dot)$/i.test(clean.replace(/[.,!?;:]+/g, ''));
+    if (!lower || isBareWakeWord || /^(hi|hello|hey|yo|what'?s up)$/i.test(lower)) {
+      return {
+        intent: 'ASK_STATUS',
+        confidence: 0.98,
+        reason: 'User addressed JOT wake word',
+        source: 'user_declared',
+      };
+    }
 
     // 1. Time Correction ("I stopped an hour ago", "stopped 30 minutes ago", "set elapsed to 45m")
     const stoppedAgoMatch = lower.match(/(?:i\s+)?stopped\s+(\d+|an?|half\s+an?)\s*(hour|hr|minute|min)s?\s*ago/i);

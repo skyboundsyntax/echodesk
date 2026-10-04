@@ -151,5 +151,83 @@
       gate.savePermissions({ rawAudioRetention: true });
       exp(gate.getPermissions().rawAudioRetention).toBe(false);
     });
+
+    test('Speech-to-Text normalizer corrects phonetic mishearings for "Hey JOT"', () => {
+      exp(VoiceInput.normalizeTranscript('hey john, studying DBMS')).toBe('Hey JOT, studying DBMS');
+      exp(VoiceInput.normalizeTranscript('hey job studying DBMS')).toBe('Hey JOT, studying DBMS');
+      exp(VoiceInput.normalizeTranscript('hey chat studying DBMS')).toBe('Hey JOT, studying DBMS');
+      exp(VoiceInput.normalizeTranscript('hey judge pause')).toBe('Hey JOT, pause');
+      exp(VoiceInput.normalizeTranscript('hey josh pause')).toBe('Hey JOT, pause');
+      exp(VoiceInput.normalizeTranscript('hey shot pause')).toBe('Hey JOT, pause');
+      exp(VoiceInput.normalizeTranscript('hey dot pause')).toBe('Hey JOT, pause');
+      exp(VoiceInput.normalizeTranscript('hey j o t, studying DBMS')).toBe('Hey JOT, studying DBMS');
+      exp(VoiceInput.normalizeTranscript('hey j.o.t. pause')).toBe('Hey JOT, pause');
+      exp(VoiceInput.normalizeTranscript('hey jott pause')).toBe('Hey JOT, pause');
+      exp(VoiceInput.normalizeTranscript('a jot studying DBMS')).toBe('Hey JOT, studying DBMS');
+      exp(VoiceInput.normalizeTranscript('hi jot')).toBe('Hey JOT');
+      exp(VoiceInput.normalizeTranscript('hey john')).toBe('Hey JOT');
+      exp(VoiceInput.normalizeTranscript('hey job')).toBe('Hey JOT');
+      exp(VoiceInput.normalizeTranscript('john pause')).toBe('JOT, pause');
+      exp(VoiceInput.normalizeTranscript('job pause')).toBe('JOT, pause');
+    });
+
+    test('Misheard speech "hey john studying DBMS" correctly starts work session', async () => {
+      const gate = new PrivacyPolicyGate();
+      const ai = new DeterministicLocalProvider();
+      const engine = new IntentEngine({ aiProvider: ai, privacyGate: gate });
+
+      const parsed = await engine.process('hey john studying DBMS', {}, { explicitUserGesture: true });
+      exp(parsed.allowed).toBe(true);
+      exp(parsed.intent).toBe('START_WORK_SESSION');
+      exp(parsed.contextName).toBe('DBMS');
+    });
+
+    test('Misheard speech "hey job pause" correctly triggers pause session', async () => {
+      const gate = new PrivacyPolicyGate();
+      const ai = new DeterministicLocalProvider();
+      const engine = new IntentEngine({ aiProvider: ai, privacyGate: gate });
+
+      const parsed = await engine.process('hey job pause', { state: 'ACTIVE' }, { explicitUserGesture: true });
+      exp(parsed.allowed).toBe(true);
+      exp(parsed.intent).toBe('PAUSE_SESSION');
+    });
+
+    test('Standalone wake utterance "Hey JOT" is recognized and authorized (ASK_STATUS)', async () => {
+      const gate = new PrivacyPolicyGate();
+      const ai = new DeterministicLocalProvider();
+      const engine = new IntentEngine({ aiProvider: ai, privacyGate: gate });
+
+      const parsed = await engine.process('Hey JOT', {}, { explicitUserGesture: true });
+      exp(parsed.allowed).toBe(true);
+      exp(parsed.intent).toBe('ASK_STATUS');
+    });
+
+    test('Standalone "JOT" and "J.O.T" (including trailing periods from STT) are recognized and authorized', async () => {
+      const gate = new PrivacyPolicyGate();
+      const ai = new DeterministicLocalProvider();
+      const engine = new IntentEngine({ aiProvider: ai, privacyGate: gate });
+
+      const variants = ['JOT', 'jot', 'Jot.', 'J.O.T', 'J.O.T.', 'j.o.t', 'j.o.t.', 'J O T', 'dot.'];
+      for (const v of variants) {
+        const parsed = await engine.process(v, {}, { explicitUserGesture: true });
+        exp(parsed.allowed).toBe(true);
+        exp(parsed.intent).toBe('ASK_STATUS');
+      }
+    });
+
+    test('Commands prefixed with "J.O.T." parse correctly', async () => {
+      const gate = new PrivacyPolicyGate();
+      const ai = new DeterministicLocalProvider();
+      const engine = new IntentEngine({ aiProvider: ai, privacyGate: gate });
+
+      const parsedStart = await engine.process('J.O.T. studying DBMS', {}, { explicitUserGesture: true });
+      exp(parsedStart.allowed).toBe(true);
+      exp(parsedStart.intent).toBe('START_WORK_SESSION');
+      exp(parsedStart.contextName).toBe('DBMS');
+
+      const parsedPause = await engine.process('J.O.T. pause', { state: 'ACTIVE' }, { explicitUserGesture: true });
+      exp(parsedPause.allowed).toBe(true);
+      exp(parsedPause.intent).toBe('PAUSE_SESSION');
+    });
   });
 })();

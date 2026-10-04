@@ -28,6 +28,34 @@ class VoiceInput {
   }
 
   /**
+   * Normalizes speech-to-text transcripts to reliably recognize "Hey JOT" / "JOT".
+   * @param {string} text
+   * @returns {string}
+   */
+  static normalizeTranscript(text) {
+    if (!text || typeof text !== 'string') return '';
+    let t = text.trim();
+
+    t = t.replace(/[.,!?;:]+$/, '').trim();
+    t = t.replace(/\b(?:j\.?\s*o\.?\s*t\.?|jay\s*(?:o|oh)\s*tee|j-o-t)\b/gi, 'JOT');
+    t = t.replace(/^hey\s+(?:jot|john|job|josh|jock|joy|chat|judge|george|shot|dot|yacht|chuck|jar|jaw|doc|jack|just|jaunt|jott|jatt|judd|jake|jaat|jolt|joint|jump|junk|jug|chad|geoff|jeff)\b/i, 'Hey JOT');
+    t = t.replace(/^(?:a|eight|hate|hi|ok|okay)\s+jot\b/i, 'Hey JOT');
+    t = t.replace(/^(?:a|eight|hate|hi|ok|okay)\s+(?:john|job|chat|judge|george|shot|dot)\b/i, 'Hey JOT');
+    t = t.replace(/^(?:jot|john|job|josh|jock|chat|judge|shot|dot|yacht|jott|jatt)\s*([,:]|\s+(?:studying|working|pause|stop|resume|continue|less|more|balanced|why|what|status|i\s+stopped|forget))\b/i, 'JOT, $2');
+
+    const strippedWord = t.replace(/[.,!?;:]+/g, '').trim().toLowerCase();
+    const isJotWakeWord = /^(?:jot|jott|jatt|john|job|josh|jock|chat|shot|dot|yacht|chuck|judge|joint|jump|junk|jug|doc|jack|jar|jaw|just|jaunt|jake|judd|chad|geoff|jeff)$/i.test(strippedWord);
+    if (isJotWakeWord) {
+      t = 'Hey JOT';
+    }
+
+    t = t.replace(/\bhey\s+jot\b/i, 'Hey JOT');
+    t = t.replace(/\bjot\b/i, 'JOT');
+
+    return t;
+  }
+
+  /**
    * Simulate voice utterance with full Privacy Policy Gate checks
    * @param {string} transcript
    * @param {Object} [meta]
@@ -42,10 +70,12 @@ class VoiceInput {
         return reject(err);
       }
 
+      const normalized = VoiceInput.normalizeTranscript(transcript);
+
       this.isListening = true;
       setTimeout(() => {
         this.isListening = false;
-        resolve(transcript);
+        resolve(normalized);
       }, 10);
     });
   }

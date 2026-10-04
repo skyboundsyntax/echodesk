@@ -158,5 +158,32 @@
       gate.savePermissions({ rawVideoRetention: true });
       exp(gate.getPermissions().rawVideoRetention).toBe(false);
     });
+
+    test('CameraPresenceSensor exposes simulateGesture for touchless controls (TOGGLE_PAUSE)', () => {
+      const events = new EventBus();
+      const sensor = new CameraPresenceSensor({ eventBus: events });
+      let gestureDetected = null;
+
+      events.on('camera:gesture-control', (e) => {
+        gestureDetected = e;
+      });
+
+      sensor.simulateGesture('TOGGLE_PAUSE');
+      exp(gestureDetected).not.toBeNull();
+      exp(gestureDetected.action).toBe('TOGGLE_PAUSE');
+      exp(gestureDetected.manual).toBe(true);
+    });
+
+    test('CameraPresenceSensor cleans up internal references on stop() to guarantee zero retention', async () => {
+      const gate = new PrivacyPolicyGate({ cameraEnabled: true });
+      const sensor = new CameraPresenceSensor({ privacyGate: gate });
+      await sensor.start(true);
+      exp(sensor.isActive).toBe(true);
+
+      sensor.stop();
+      exp(sensor.isActive).toBe(false);
+      exp(sensor.prevGray).toBe(null);
+      exp(sensor.currentSignal).toBe('UNCERTAIN');
+    });
   });
 })();

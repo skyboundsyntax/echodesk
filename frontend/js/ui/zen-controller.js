@@ -115,6 +115,37 @@ class ZenController {
       window.appEvents.on('presence:signal', (e) => this.handlePresenceSignal(e));
       window.appEvents.on('presence:started', () => this.render());
       window.appEvents.on('presence:stopped', () => this.render());
+      window.appEvents.on('camera:gesture-control', (e) => this.handleGestureControl(e));
+      window.appEvents.on('opencv:ready', () => this.render());
+    }
+
+    // Gesture simulation button for hackathon demo / test strip
+    const simGestureBtn = document.getElementById('demo-simulate-gesture');
+    if (simGestureBtn) {
+      simGestureBtn.addEventListener('click', () => {
+        if (this.app.cameraPresence) {
+          this.app.cameraPresence.simulateGesture('TOGGLE_PAUSE');
+        }
+      });
+    }
+  }
+
+  handleGestureControl(gesture) {
+    if (gesture.action === 'TOGGLE_PAUSE') {
+      const s = this.app.session;
+      if (!s) return;
+
+      if (s.state === WorkSessionState.ACTIVE) {
+        this.app.pauseSession('OpenCV hand gesture detected (Wave/Raise)');
+        if (this.app.jotController) {
+          this.app.jotController.addFeedItem('CAMERA_GESTURE', '🖐️ OpenCV touchless gesture detected: Paused focus session.', true);
+        }
+      } else if (s.state === WorkSessionState.PAUSED || s.state === WorkSessionState.UNCERTAIN) {
+        this.app.resumeSession('OpenCV hand gesture detected (Wave/Raise)');
+        if (this.app.jotController) {
+          this.app.jotController.addFeedItem('CAMERA_GESTURE', '🖐️ OpenCV touchless gesture detected: Resumed focus session.', true);
+        }
+      }
     }
   }
 
@@ -156,7 +187,9 @@ class ZenController {
     // Camera Sensor Pill
     if (this.cameraStatusPill) {
       const isCamActive = this.app.cameraPresence && this.app.cameraPresence.isActive;
-      this.cameraStatusPill.textContent = isCamActive ? '📷 Local Sensor: Active' : '📷 Local Sensor: Off';
+      const isOpenCv = this.app.cameraPresence && (this.app.cameraPresence.isOpenCvReady || (typeof cv !== 'undefined' && cv.Mat));
+      const engineLabel = isOpenCv ? 'OpenCV.js' : 'Local Sensor';
+      this.cameraStatusPill.textContent = isCamActive ? `📷 ${engineLabel}: Active` : `📷 ${engineLabel}: Off`;
       this.cameraStatusPill.className = isCamActive ? 'zen-sensor-indicator on' : 'zen-sensor-indicator';
     }
   }
@@ -190,7 +223,8 @@ class ZenController {
 
   handlePresenceSignal(signalData) {
     if (this.presenceIndicator) {
-      this.presenceIndicator.textContent = `Presence: ${signalData.signal} (${Math.round(signalData.confidence * 100)}%)`;
+      const engineTag = signalData.engine === 'OpenCV.js' ? ' • OpenCV' : '';
+      this.presenceIndicator.textContent = `Presence: ${signalData.signal} (${Math.round(signalData.confidence * 100)}%)${engineTag}`;
       this.presenceIndicator.className = signalData.signal === 'PRESENT' ? 'zen-sensor-indicator on' : 'zen-sensor-indicator';
     }
   }

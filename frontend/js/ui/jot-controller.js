@@ -218,10 +218,15 @@ class JotController {
         break;
 
       case 'ASK_STATUS':
+        const isWakeWord = command.reason === 'User addressed JOT wake word';
+        const prefix = isWakeWord ? '⚡ JOT is listening! ' : '';
         const statusMsg = this.app.session
-          ? `Current session: ${this.app.session.contextName} (${this.app.session.state}). Active: ${WorkSession.formatDuration(this.app.session.getActiveDurationMs())}.`
-          : 'No active session. Tell JOT what you are working on to begin.';
+          ? `${prefix}Current session: ${this.app.session.contextName} (${this.app.session.state}). Active: ${WorkSession.formatDuration(this.app.session.getActiveDurationMs())}.`
+          : `${prefix}No active session. Tell JOT what you are working on to begin.`;
         this.addFeedItem('STATUS_INQUIRY', statusMsg, true);
+        if (isWakeWord && this.input) {
+          this.input.focus();
+        }
         break;
 
       case 'ASK_EXPLANATION':

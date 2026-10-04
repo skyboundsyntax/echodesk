@@ -225,6 +225,9 @@
             <button id="demo-simulate-checkin" class="quick-chip" style="background: rgba(168,85,247,0.1); border-color: rgba(168,85,247,0.3); color: #c084fc;">
               🧪 Offer Smart Check-In
             </button>
+            <button id="demo-simulate-gesture" class="quick-chip" style="background: rgba(14,165,233,0.12); border-color: rgba(14,165,233,0.3); color: #38bdf8;">
+              🖐️ Simulate OpenCV Gesture (Pause/Resume)
+            </button>
           </div>
 
         </div>
@@ -567,6 +570,9 @@
     </section>
 
   </main>
+
+  <!-- OpenCV.js Computer Vision Runtime (Asynchronously loaded with deterministic zero-dependency fallback) -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js" id="opencv-script"></script>
 
   <!-- Core Scripts in Dependency Order -->
   <script src="js/core/events.js"></script>
