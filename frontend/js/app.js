@@ -184,7 +184,7 @@ class EchoDeskApp {
       this.zenController.render();
       // If camera presence enabled in privacy gate, start presence sensor
       if (this.privacyGate.getPermissions().cameraEnabled && !this.cameraPresence.isActive) {
-        this.cameraPresence.start(true); // default to simulated local presence for safety
+        this.cameraPresence.start(false); // Attempt physical camera with OpenCV (falls back to sim if unavailable)
       }
     } else {
       if (this.cameraPresence.isActive) {

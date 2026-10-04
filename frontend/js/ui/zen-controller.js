@@ -40,6 +40,19 @@ class ZenController {
     // Sensor status
     this.cameraStatusPill = document.getElementById('zen-camera-status');
     this.presenceIndicator = document.getElementById('zen-presence-indicator');
+
+    // Camera Controls & OpenCV HUD
+    this.cameraToggleBtn = document.getElementById('zen-btn-camera-toggle');
+    this.cameraHud = document.getElementById('zen-camera-hud');
+    this.cameraPreviewContainer = document.getElementById('zen-camera-preview-container');
+    this.hudCloseCamBtn = document.getElementById('zen-btn-close-cam');
+    this.hudSwitchSourceBtn = document.getElementById('zen-btn-switch-source');
+    this.hudEngineVal = document.getElementById('zen-hud-engine-val');
+    this.hudPresenceVal = document.getElementById('zen-hud-presence-val');
+    this.hudMotionVal = document.getElementById('zen-hud-motion-val');
+    this.hudGestureVal = document.getElementById('zen-hud-gesture-val');
+    this.hudModeBadge = document.getElementById('zen-camera-mode-badge');
+    this.gestureHint = document.getElementById('zen-gesture-zone-hint');
   }
 
   bindEvents() {
@@ -57,6 +70,68 @@ class ZenController {
     }
     if (this.exitZenBtn) {
       this.exitZenBtn.addEventListener('click', () => this.app.switchView('jot'));
+    }
+
+    // Camera Toggle Button
+    if (this.cameraToggleBtn) {
+      this.cameraToggleBtn.addEventListener('click', async () => {
+        const cam = this.app.cameraPresence;
+        if (!cam) return;
+
+        if (cam.isActive) {
+          // Turn OFF camera
+          cam.stop();
+          if (this.app.privacyGate) {
+            this.app.privacyGate.savePermissions({ cameraEnabled: false });
+          }
+          if (this.app.jotController) {
+            this.app.jotController.addFeedItem('CAMERA_OFF', '📷 Camera and OpenCV vision sensor turned off in Zen Focus.', false);
+          }
+        } else {
+          // Turn ON camera
+          if (this.app.privacyGate) {
+            this.app.privacyGate.savePermissions({ cameraEnabled: true });
+          }
+          this.cameraToggleBtn.textContent = '⏳ Starting Camera...';
+          try {
+            await cam.start(false); // Request real webcam
+            if (this.app.jotController) {
+              const srcMsg = cam.simulatedMode ? 'Simulated local optical feed' : 'Physical webcam with OpenCV.js vision';
+              this.app.jotController.addFeedItem('CAMERA_ON', `📷 Camera activated: ${srcMsg}. Zero frames stored.`, true);
+            }
+          } catch (err) {
+            console.warn('[ZenController] Physical camera unavailable, fallback to simulated:', err);
+            await cam.start(true);
+          }
+        }
+        this.render();
+      });
+    }
+
+    // HUD Close Camera Button
+    if (this.hudCloseCamBtn) {
+      this.hudCloseCamBtn.addEventListener('click', () => {
+        if (this.app.cameraPresence && this.app.cameraPresence.isActive) {
+          this.app.cameraPresence.stop();
+          if (this.app.privacyGate) {
+            this.app.privacyGate.savePermissions({ cameraEnabled: false });
+          }
+          this.render();
+        }
+      });
+    }
+
+    // HUD Switch Source Button (Webcam vs Simulation)
+    if (this.hudSwitchSourceBtn) {
+      this.hudSwitchSourceBtn.addEventListener('click', async () => {
+        const cam = this.app.cameraPresence;
+        if (!cam || !cam.isActive) return;
+
+        const targetSimulated = !cam.simulatedMode;
+        cam.stop();
+        await cam.start(targetSimulated);
+        this.render();
+      });
     }
 
     // Pause card confirmation
@@ -135,6 +210,17 @@ class ZenController {
       const s = this.app.session;
       if (!s) return;
 
+      if (this.gestureHint) {
+        this.gestureHint.classList.add('gesture-triggered');
+        setTimeout(() => this.gestureHint && this.gestureHint.classList.remove('gesture-triggered'), 1500);
+      }
+      if (this.hudGestureVal) {
+        this.hudGestureVal.textContent = '🖐️ GESTURE TRIGGERED (Toggle Pause)';
+        setTimeout(() => {
+          if (this.hudGestureVal) this.hudGestureVal.textContent = 'ACTIVE (Pause / Resume)';
+        }, 3000);
+      }
+
       if (s.state === WorkSessionState.ACTIVE) {
         this.app.pauseSession('OpenCV hand gesture detected (Wave/Raise)');
         if (this.app.jotController) {
@@ -184,11 +270,48 @@ class ZenController {
       }
     }
 
+    // Camera Sensor & HUD synchronization
+    const isCamActive = this.app.cameraPresence && this.app.cameraPresence.isActive;
+    const isSimulated = this.app.cameraPresence && this.app.cameraPresence.simulatedMode;
+    const isOpenCv = this.app.cameraPresence && (this.app.cameraPresence.isOpenCvReady || (typeof cv !== 'undefined' && cv.Mat));
+    const engineLabel = isOpenCv ? 'OpenCV.js' : 'Local Sensor';
+
+    if (this.cameraToggleBtn) {
+      if (isCamActive) {
+        this.cameraToggleBtn.innerHTML = `📷 Close Camera (${engineLabel})`;
+        this.cameraToggleBtn.classList.add('active');
+      } else {
+        this.cameraToggleBtn.innerHTML = `📷 Open Camera (${engineLabel})`;
+        this.cameraToggleBtn.classList.remove('active');
+      }
+    }
+
+    if (this.cameraHud) {
+      if (isCamActive) {
+        this.cameraHud.style.display = 'block';
+        if (this.hudModeBadge) {
+          this.hudModeBadge.textContent = isSimulated ? 'SIMULATED OPTICAL FEED' : 'HARDWARE WEBCAM FEED';
+          this.hudModeBadge.className = isSimulated ? 'hud-badge badge-simulated' : 'hud-badge badge-hardware';
+        }
+        if (this.hudEngineVal) {
+          this.hudEngineVal.textContent = isOpenCv ? 'OpenCV.js (WebAssembly)' : 'Baseline Delta Classifier';
+        }
+        if (this.hudSwitchSourceBtn) {
+          this.hudSwitchSourceBtn.textContent = isSimulated ? '📹 Switch to Webcam' : '🧪 Switch to Simulation';
+        }
+        if (this.app.cameraPresence && this.cameraPreviewContainer) {
+          this.app.cameraPresence.mountPreview(this.cameraPreviewContainer);
+        }
+      } else {
+        this.cameraHud.style.display = 'none';
+        if (this.cameraPreviewContainer) {
+          this.cameraPreviewContainer.innerHTML = '';
+        }
+      }
+    }
+
     // Camera Sensor Pill
     if (this.cameraStatusPill) {
-      const isCamActive = this.app.cameraPresence && this.app.cameraPresence.isActive;
-      const isOpenCv = this.app.cameraPresence && (this.app.cameraPresence.isOpenCvReady || (typeof cv !== 'undefined' && cv.Mat));
-      const engineLabel = isOpenCv ? 'OpenCV.js' : 'Local Sensor';
       this.cameraStatusPill.textContent = isCamActive ? `📷 ${engineLabel}: Active` : `📷 ${engineLabel}: Off`;
       this.cameraStatusPill.className = isCamActive ? 'zen-sensor-indicator on' : 'zen-sensor-indicator';
     }
@@ -226,6 +349,22 @@ class ZenController {
       const engineTag = signalData.engine === 'OpenCV.js' ? ' • OpenCV' : '';
       this.presenceIndicator.textContent = `Presence: ${signalData.signal} (${Math.round(signalData.confidence * 100)}%)${engineTag}`;
       this.presenceIndicator.className = signalData.signal === 'PRESENT' ? 'zen-sensor-indicator on' : 'zen-sensor-indicator';
+    }
+
+    if (this.hudPresenceVal) {
+      const conf = Math.round((signalData.confidence || 0.95) * 100);
+      this.hudPresenceVal.textContent = `${signalData.signal} (${conf}%)`;
+      this.hudPresenceVal.className = signalData.signal === 'PRESENT' ? 'telemetry-val text-success' : 'telemetry-val text-warning';
+    }
+
+    if (this.hudMotionVal) {
+      if (typeof signalData.motionRatio === 'number') {
+        const pct = (signalData.motionRatio * 100).toFixed(1);
+        const level = signalData.motionRatio > 0.15 ? 'Active Movement' : (signalData.motionRatio > 0.02 ? 'Focused Motion' : 'Quiet Focus');
+        this.hudMotionVal.textContent = `${level} (${pct}% delta)`;
+      } else {
+        this.hudMotionVal.textContent = signalData.signal === 'PRESENT' ? 'Focused Motion' : 'No Motion Detected';
+      }
     }
   }
 

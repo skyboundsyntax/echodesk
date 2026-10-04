@@ -103,8 +103,14 @@ class CameraPresenceSensor {
     this.confidence = 0.95;
 
     if (this.eventBus) {
-      this.eventBus.emit('presence:started', { simulated: true });
-      this.eventBus.emit('presence:signal', { signal: this.currentSignal, confidence: this.confidence, simulated: true });
+      this.eventBus.emit('presence:started', { simulated: true, engine: this.isOpenCvReady ? 'OpenCV.js' : 'baseline' });
+      this.eventBus.emit('presence:signal', {
+        signal: this.currentSignal,
+        confidence: this.confidence,
+        simulated: true,
+        engine: this.isOpenCvReady ? 'OpenCV.js' : 'baseline',
+        motionRatio: 0.04,
+      });
     }
     return true;
   }
@@ -313,6 +319,39 @@ class CameraPresenceSensor {
     }
   }
 
+  /**
+   * Mount live camera stream or synthetic optical radar into container element
+   * @param {HTMLElement} container
+   */
+  mountPreview(container) {
+    if (!container || typeof document === 'undefined') return;
+    this.previewContainer = container;
+
+    if (!this.simulatedMode && this.videoElement) {
+      if (this.videoElement.parentElement !== container) {
+        container.innerHTML = '';
+        this.videoElement.style.width = '100%';
+        this.videoElement.style.height = '100%';
+        this.videoElement.style.objectFit = 'cover';
+        this.videoElement.style.display = 'block';
+        container.appendChild(this.videoElement);
+      }
+    } else {
+      if (!container.querySelector('.simulated-radar-screen')) {
+        container.innerHTML = `
+          <div class="simulated-radar-screen">
+            <div class="radar-sweep"></div>
+            <div class="radar-crosshairs"></div>
+            <div class="radar-status-text">
+              <span>● SYNTHETIC OPTICAL SENSOR</span>
+              <span class="radar-sub">OpenCV.js Processing Loop Active</span>
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
+
   stop() {
     this.isActive = false;
     if (this.processInterval) {
@@ -327,10 +366,18 @@ class CameraPresenceSensor {
       try { this.prevGray.delete(); } catch (e) {}
       this.prevGray = null;
     }
+    if (this.videoElement && this.videoElement.parentElement) {
+      this.videoElement.parentElement.removeChild(this.videoElement);
+    }
     this.videoElement = null;
     this.canvasElement = null;
     this.lastFrameData = null;
     this.currentSignal = 'UNCERTAIN';
+
+    if (this.previewContainer) {
+      this.previewContainer.innerHTML = '';
+      this.previewContainer = null;
+    }
 
     if (this.eventBus) {
       this.eventBus.emit('presence:stopped', {});
