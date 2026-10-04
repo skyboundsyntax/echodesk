@@ -1,0 +1,43 @@
+{
+  "name": "ECHODESK — Powered by JOT",
+  "short_name": "ECHODESK",
+  "description": "Ambient, privacy-first AI productivity workspace powered by JOT. Zero passive surveillance.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090b10",
+  "theme_color": "#ff6b18",
+  "orientation": "portrait-primary",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "JOT Workspace",
+      "url": "./index.html#jot",
+      "description": "Start JOT intent session"
+    },
+    {
+      "name": "Zen Focus",
+      "url": "./index.html#zen",
+      "description": "Open Zen deep work timer"
+    },
+    {
+      "name": "Office Kit / Bridge",
+      "url": "./index.html#bridge",
+      "description": "Cross-device session handoff"
+    }
+  ]
+}

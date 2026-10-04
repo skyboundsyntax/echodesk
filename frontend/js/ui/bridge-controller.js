@@ -26,6 +26,20 @@ class BridgeController {
     this.laptopMeta = document.getElementById('bridge-laptop-meta');
     this.laptopTimer = document.getElementById('bridge-laptop-timer');
     this.laptopResumeBtn = document.getElementById('btn-laptop-resume');
+    this.syncToPhoneBtn = document.getElementById('btn-sync-to-phone');
+
+    // Office Kit Roles & Containers
+    this.roleBtnDual = document.getElementById('role-btn-dual');
+    this.roleBtnPhone = document.getElementById('role-btn-phone');
+    this.roleBtnOffice = document.getElementById('role-btn-office');
+    this.bridgeLayout = document.querySelector('.bridge-layout');
+    this.deviceCards = document.querySelectorAll('.device-mockup-card');
+
+    // Office Kit LAN Pairing Station
+    this.pinElem = document.getElementById('office-kit-pin');
+    this.urlElem = document.getElementById('office-kit-url');
+    this.refreshPinBtn = document.getElementById('btn-refresh-pin');
+    this.copyStationUrlBtn = document.getElementById('btn-copy-station-url');
 
     // Pipeline Stepper Steps
     this.stepPhone = document.getElementById('step-phone');
@@ -78,6 +92,68 @@ class BridgeController {
         }
       });
     }
+
+    if (this.syncToPhoneBtn) {
+      this.syncToPhoneBtn.addEventListener('click', () => {
+        if (!window.bridgeEngine) return;
+        try {
+          const currentSession = this.app.session && this.app.session.state !== WorkSessionState.IDLE
+            ? this.app.session.toJSON()
+            : { contextName: 'DBMS', topic: 'Normalization', lastStep: 'Q5', status: 'active', activeDurationMs: 60000 };
+          window.bridgeEngine.syncBackToPhone(currentSession, 'phone');
+          this.render();
+          if (typeof alert !== 'undefined') {
+            alert('⚡ Session state synchronized back to Phone!');
+          }
+        } catch (err) {
+          this.showError(err.code || 'SYNC_ERROR', err.message);
+        }
+      });
+    }
+
+    // Role switcher events
+    const roleBtns = [
+      { el: this.roleBtnDual, role: 'dual' },
+      { el: this.roleBtnPhone, role: 'phone' },
+      { el: this.roleBtnOffice, role: 'office_kit' },
+    ];
+
+    roleBtns.forEach(({ el, role }) => {
+      if (el) {
+        el.addEventListener('click', () => {
+          if (window.bridgeEngine) window.bridgeEngine.setRole(role);
+          roleBtns.forEach(b => b.el && b.el.classList.remove('active'));
+          el.classList.add('active');
+          this.applyRoleLayout(role);
+        });
+      }
+    });
+
+    // Pairing PIN and URL events
+    if (this.refreshPinBtn) {
+      this.refreshPinBtn.addEventListener('click', () => {
+        if (window.appStorage) {
+          const newPin = `ECHO-${Math.floor(1000 + Math.random() * 9000)}`;
+          window.appStorage.set('pairing_pin', newPin);
+          if (this.pinElem) this.pinElem.textContent = newPin;
+        }
+      });
+    }
+
+    if (this.copyStationUrlBtn) {
+      this.copyStationUrlBtn.addEventListener('click', () => {
+        const url = this.urlElem ? this.urlElem.textContent : window.location.href;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(url).then(() => {
+            this.copyStationUrlBtn.textContent = '✓ Copied';
+            setTimeout(() => { if (this.copyStationUrlBtn) this.copyStationUrlBtn.textContent = 'Copy'; }, 2000);
+          });
+        }
+      });
+    }
+
+    // Fetch dynamic pairing info from backend if running
+    this.fetchBackendPairingInfo();
 
     // Hackathon Simulation Triggers
     if (this.demoUnauthorizedBtn) {
@@ -211,6 +287,46 @@ class BridgeController {
         if (this.laptopEmpty) this.laptopEmpty.style.display = 'block';
       }
     }
+
+    // 4. Update Pairing PIN
+    if (this.pinElem && engine) {
+      this.pinElem.textContent = engine.getPairingPin();
+    }
+  }
+
+  applyRoleLayout(role) {
+    if (!this.bridgeLayout || !this.deviceCards || this.deviceCards.length < 2) return;
+    const phoneCard = this.deviceCards[0];
+    const laptopCard = this.deviceCards[1];
+
+    if (role === 'phone') {
+      this.bridgeLayout.style.gridTemplateColumns = '1fr';
+      phoneCard.style.display = 'block';
+      laptopCard.style.display = 'none';
+    } else if (role === 'office_kit') {
+      this.bridgeLayout.style.gridTemplateColumns = '1fr';
+      phoneCard.style.display = 'none';
+      laptopCard.style.display = 'block';
+    } else {
+      this.bridgeLayout.style.gridTemplateColumns = window.innerWidth > 820 ? '1fr 1fr' : '1fr';
+      phoneCard.style.display = 'block';
+      laptopCard.style.display = 'block';
+    }
+  }
+
+  fetchBackendPairingInfo() {
+    if (typeof fetch === 'undefined') return;
+    fetch('/api/bridge/pairing')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data && data.pairingCode) {
+          if (this.pinElem) this.pinElem.textContent = data.pairingCode;
+          if (this.urlElem) this.urlElem.textContent = data.companionUrl;
+        }
+      })
+      .catch(() => {
+        // Deterministic local offline mode
+      });
   }
 
   updateStepper(stage) {

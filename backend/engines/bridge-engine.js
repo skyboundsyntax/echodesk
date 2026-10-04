@@ -34,7 +34,7 @@ class BridgeEngine {
   constructor(options = {}) {
     this.privacyGate = options.privacyGate || null;
     this.deviceId = options.deviceId || 'dev_server_host';
-    this.authorizedDevices = ['laptop', 'laptop_companion_01', 'desktop', 'companion'];
+    this.authorizedDevices = ['laptop', 'laptop_companion_01', 'desktop', 'companion', 'phone', 'mobile', 'phone_01'];
     this.sessionTtlMs = options.sessionTtlMs || (5 * 60 * 1000);
     this.handoffPayload = null;
     this.currentStage = BridgeStage.PHONE;
@@ -172,6 +172,17 @@ class BridgeEngine {
     this.currentStage = BridgeStage.LAPTOP_SESSION_READY;
     this.lastError = null;
     return this.handoffPayload;
+  }
+
+  /**
+   * Synchronize state back from Laptop/Office Kit to Phone
+   * Implements Acceptance Criterion: "State changes can sync back."
+   * @param {Object} updatedSession
+   * @param {string} [targetDevice='phone']
+   * @returns {Object} Reverse handoff payload
+   */
+  syncBackToPhone(updatedSession, targetDevice = 'phone') {
+    return this.initiateHandoff(updatedSession, targetDevice);
   }
 
   clearHandoff() {

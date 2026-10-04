@@ -1,0 +1,280 @@
+/**
+ * ECHODESK — Mobile-First & Phone UX Stylesheet
+ * Optimized for Mobile Phones (PWA, Android WebView, Flutter, React Native).
+ * Features ergonomic thumb-friendly touch targets, bottom navigation bar,
+ * safe-area insets, and Office Kit mode switching.
+ */
+
+:root {
+  --mobile-bottom-nav-height: 64px;
+}
+
+/* Touch manipulation & tap highlight removal */
+html, body {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* Mobile Safe-Area Handling */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* PWA Install Banner */
+.pwa-install-banner {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, rgba(255, 107, 24, 0.15) 0%, rgba(255, 107, 24, 0.05) 100%);
+  border-bottom: 1px solid rgba(255, 107, 24, 0.3);
+  font-family: var(--font-heading);
+  font-size: 12px;
+  color: #fff;
+  z-index: 60;
+  position: relative;
+}
+
+.pwa-install-banner.active {
+  display: flex;
+}
+
+.pwa-install-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pwa-install-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  color: #090b10;
+}
+
+.pwa-install-btn {
+  background: var(--primary-gradient);
+  color: #090b10;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.pwa-dismiss-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+/* Office Kit Role Switcher */
+.office-kit-role-selector {
+  display: flex;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-light);
+  margin-bottom: 20px;
+  width: fit-content;
+}
+
+.role-btn {
+  padding: 6px 14px;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.role-btn.active {
+  background: var(--primary);
+  color: #090b10;
+  font-weight: 700;
+}
+
+/* Mobile Bottom Navigation Bar (Shown on small screens) */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: rgba(9, 11, 16, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-light);
+  z-index: 100;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: center;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 8px 4px;
+  cursor: pointer;
+  gap: 4px;
+  transition: color var(--transition-fast);
+  height: 100%;
+}
+
+.mobile-nav-item.active {
+  color: var(--primary);
+}
+
+.mobile-nav-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.mobile-nav-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+/* QR Code & Pairing Box */
+.pairing-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface-elevated);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-xs);
+  padding: 12px 16px;
+  margin-top: 14px;
+}
+
+.pairing-pin {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: 0.15em;
+}
+
+/* ==========================================================================
+   Screen Adaptations (@media max-width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Hide standard header nav tabs, display bottom bar */
+  .topbar {
+    padding: 12px 16px;
+  }
+
+  .nav-tabs {
+    display: none;
+  }
+
+  .mobile-bottom-nav {
+    display: grid;
+  }
+
+  .app-container {
+    padding: 16px 16px calc(var(--mobile-bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 24px) 16px;
+  }
+
+  /* Compact header pills */
+  .status-indicators {
+    gap: 6px;
+  }
+
+  .sensor-pill:not(#pill-sensor-mic):not(#pill-sensor-cam) {
+    display: none;
+  }
+
+  .sensor-pill {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  /* Touch-friendly inputs */
+  .jot-input-wrapper {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .jot-text-input {
+    width: 100%;
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .jot-actions-group {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .btn-primary, .btn-ctrl, .handoff-action-btn {
+    min-height: 46px;
+    font-size: 13px;
+  }
+
+  /* Horizontal swipeable chips */
+  .quick-chips-row {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+
+  .quick-chips-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .quick-chip {
+    flex-shrink: 0;
+    min-height: 38px;
+  }
+
+  /* Zen Display mobile sizing */
+  .zen-timer-display {
+    font-size: clamp(48px, 16vw, 76px);
+  }
+
+  .zen-controls-bar {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Bridge mobile view */
+  .bridge-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .bridge-pipeline-strip {
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 8px;
+  }
+}

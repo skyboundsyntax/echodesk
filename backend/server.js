@@ -5,6 +5,9 @@
  */
 
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const { WorkSession, WorkSessionState } = require('./core/session-state');
 const { PrivacyPolicyGate } = require('./core/privacy-gate');
 const { IntentEngine, DeterministicLocalProvider, GeminiInteractionsProvider } = require('./engines/intent-engine');
@@ -13,7 +16,48 @@ const { FlowEngine, FlowDecision, CheckInType } = require('./engines/flow-engine
 const { BridgeEngine, BridgeStage, BridgeErrorCode } = require('./engines/bridge-engine');
 
 const PORT = process.env.PORT || 3001;
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || '0.0.0.0';
+
+function getLocalIpAddress() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return '127.0.0.1';
+}
+
+const MIME_TYPES = {
+  '.html': 'text/html; charset=UTF-8',
+  '.css': 'text/css; charset=UTF-8',
+  '.js': 'application/javascript; charset=UTF-8',
+  '.json': 'application/json; charset=UTF-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain; charset=UTF-8',
+};
+
+function serveStaticFile(res, filePath) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      return sendJSON(res, 404, { error: 'Static file not found' });
+    }
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600',
+    });
+    res.end(data);
+  });
+}
 
 // Server State Singletons
 const privacyGate = new PrivacyPolicyGate();
@@ -278,6 +322,44 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'DELETE' && path === '/api/bridge/handoff') {
       bridgeEngine.clearHandoff();
       return sendJSON(res, 200, { message: 'Handoff cleared' });
+    }
+
+    // Office Kit Companion & Pairing Endpoints
+    if (req.method === 'GET' && path === '/api/bridge/pairing') {
+      const localIp = getLocalIpAddress();
+      return sendJSON(res, 200, {
+        officeKitHost: localIp,
+        port: PORT,
+        pairingCode: 'ECHO-5921',
+        companionUrl: `http://${localIp}:${PORT}/`,
+        status: 'ready',
+      });
+    }
+
+    if (req.method === 'POST' && path === '/api/bridge/sync-back') {
+      const body = await parseBody(req);
+      try {
+        const handoff = bridgeEngine.syncBackToPhone(body.session || activeSession.toJSON(), body.targetDevice || 'phone');
+        return sendJSON(res, 200, handoff);
+      } catch (err) {
+        return sendJSON(res, 403, { error: err.message, code: err.code || 'BRIDGE_ERROR' });
+      }
+    }
+
+    // Static Asset Serving for Mobile Phone PWA and Web Clients
+    if (req.method === 'GET' && !path.startsWith('/api/')) {
+      const frontendDir = path.resolve(__dirname, '..', 'frontend');
+      let targetFile = path;
+      if (targetFile === '/' || targetFile === '/index.html') {
+        targetFile = '/index.html';
+      } else if (targetFile.startsWith('/frontend/')) {
+        targetFile = targetFile.replace('/frontend/', '/');
+      }
+
+      const safePath = path.normalize(path.join(frontendDir, targetFile));
+      if (safePath.startsWith(frontendDir) && fs.existsSync(safePath) && fs.statSync(safePath).isFile()) {
+        return serveStaticFile(res, safePath);
+      }
     }
 
     // Fallthrough 404

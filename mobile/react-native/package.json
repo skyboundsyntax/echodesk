@@ -1,0 +1,15 @@
+{
+  "name": "echodesk-react-native",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "start": "react-native start"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.74.0",
+    "react-native-webview": "^13.8.6"
+  }
+}

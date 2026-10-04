@@ -43,11 +43,12 @@ class BridgeEngine {
       status: 'paired',
       lastSyncAt: Date.now(),
     };
-    this.authorizedDevices = ['laptop', 'laptop_companion_01', 'desktop', 'companion'];
+    this.authorizedDevices = ['laptop', 'laptop_companion_01', 'desktop', 'companion', 'phone', 'mobile', 'phone_01'];
     this.sessionTtlMs = options.sessionTtlMs || (5 * 60 * 1000); // 5 minutes TTL
     this.handoffPayload = null;
     this.currentStage = BridgeStage.PHONE;
     this.lastError = null;
+    this.role = options.role || (this.storage ? this.storage.get('device_role', 'phone') : 'phone');
   }
 
   _getOrCreateDeviceId() {
@@ -253,6 +254,44 @@ class BridgeEngine {
     }
 
     return payload;
+  }
+
+  /**
+   * Synchronize state back from Laptop/Office Kit to Phone
+   * Implements Acceptance Criterion: "State changes can sync back."
+   * @param {Object} updatedSession
+   * @param {string} [targetDevice='phone']
+   * @returns {Object} Reverse handoff payload
+   */
+  syncBackToPhone(updatedSession, targetDevice = 'phone') {
+    const payload = this.initiateHandoff(updatedSession, targetDevice);
+    if (this.eventBus) {
+      this.eventBus.emit('bridge:synced-back', payload);
+    }
+    return payload;
+  }
+
+  setRole(role) {
+    this.role = role;
+    if (this.storage) {
+      this.storage.set('device_role', role);
+    }
+    if (this.eventBus) {
+      this.eventBus.emit('bridge:role-changed', { role });
+    }
+  }
+
+  getRole() {
+    return this.role || 'phone';
+  }
+
+  getPairingPin() {
+    let pin = this.storage ? this.storage.get('pairing_pin', null) : null;
+    if (!pin) {
+      pin = `ECHO-${Math.floor(1000 + Math.random() * 9000)}`;
+      if (this.storage) this.storage.set('pairing_pin', pin);
+    }
+    return pin;
   }
 
   clearHandoff() {

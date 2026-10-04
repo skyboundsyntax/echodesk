@@ -8,10 +8,12 @@ class EchoDeskApp {
     this.session = null;
     this.currentView = 'jot';
     this.tickInterval = null;
+    this.deferredPrompt = null;
 
     this.initEngines();
     this.initControllers();
     this.bindGlobalNavigation();
+    this.initPWA();
     this.startHeartbeat();
   }
 
@@ -117,6 +119,13 @@ class EchoDeskApp {
       });
     });
 
+    document.querySelectorAll('.mobile-nav-item').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const view = btn.getAttribute('data-view');
+        if (view) this.switchView(view);
+      });
+    });
+
     // Demo shortcut triggers (for live evaluation)
     const demoSimAbsentBtn = document.getElementById('demo-simulate-absence');
     if (demoSimAbsentBtn) {
@@ -166,11 +175,67 @@ class EchoDeskApp {
     }
   }
 
+  initPWA() {
+    if (typeof window === 'undefined') return;
+
+    // 1. Register Service Worker for offline PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(
+          (reg) => {
+            console.log('[PWA] Service Worker registered with scope:', reg.scope);
+          },
+          (err) => {
+            console.log('[PWA] Service Worker registration skipped or failed:', err);
+          }
+        );
+      });
+    }
+
+    // 2. Mobile Install Prompt Banner
+    const installBanner = document.getElementById('pwa-install-banner');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const dismissBtn = document.getElementById('pwa-dismiss-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      if (installBanner) {
+        installBanner.classList.add('active');
+      }
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (this.deferredPrompt) {
+          this.deferredPrompt.prompt();
+          const { outcome } = await this.deferredPrompt.userChoice;
+          console.log(`[PWA] Install prompt outcome: ${outcome}`);
+          this.deferredPrompt = null;
+          if (installBanner) installBanner.classList.remove('active');
+        } else {
+          alert('To install on your phone:\n1. Tap your browser menu or share icon (⋮ or ⬆)\n2. Select "Add to Home screen" or "Install App".');
+        }
+      });
+    }
+
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        if (installBanner) installBanner.classList.remove('active');
+      });
+    }
+  }
+
   switchView(viewName) {
     this.currentView = viewName;
 
     // Update active nav button
     document.querySelectorAll('.nav-tab-btn').forEach((b) => {
+      b.classList.toggle('active', b.getAttribute('data-view') === viewName);
+    });
+
+    // Update active mobile bottom nav button
+    document.querySelectorAll('.mobile-nav-item').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-view') === viewName);
     });
 
