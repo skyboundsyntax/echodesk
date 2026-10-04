@@ -160,97 +160,133 @@
       <div class="zen-container">
         <div class="zen-ambient-aura"></div>
 
-        <div class="zen-content">
-          <h1 id="zen-context-title" class="zen-context-title">DBMS</h1>
-          <div id="zen-topic-tag" class="zen-topic-tag">Q5 — Normalization</div>
+        <!-- 50/50 Dual-Bay Split Cockpit -->
+        <div class="zen-split-cockpit">
 
-          <div id="zen-timer-huge" class="zen-timer-huge">00:00</div>
-
-          <!-- Flow State Banner -->
-          <div id="zen-flow-banner" class="zen-flow-banner">
-            <span class="flow-dot"></span>
-            <span id="zen-flow-status-text">Flow protected — JOT is staying quiet</span>
-          </div>
-
-          <!-- Natural Pause Proposal Card (When absence detected) -->
-          <div id="zen-pause-card" class="zen-pause-card">
-            <div class="zen-pause-title">Possible Pause Detected</div>
-            <div class="zen-pause-desc">Looks like you stepped away. Pause DBMS?</div>
-            <div class="zen-pause-actions">
-              <button id="zen-pause-confirm-btn" class="zen-btn zen-btn-primary">Pause DBMS</button>
-              <button id="zen-pause-dismiss-btn" class="zen-btn">Keep Working</button>
+          <!-- LEFT BAY: Session Control & Primary Timer (50% equal space) -->
+          <div class="zen-bay zen-bay-left">
+            <div class="zen-session-meta">
+              <span class="zen-focus-badge">● FOCUS MODE</span>
+              <h1 id="zen-context-title" class="zen-context-title">DBMS</h1>
+              <div id="zen-topic-tag" class="zen-topic-tag">Q5 — Normalization</div>
             </div>
-          </div>
 
-          <!-- Gentle Check-in Card -->
-          <div id="zen-checkin-card" class="zen-checkin-card">
-            <div id="zen-checkin-title" class="zen-checkin-title">💧 Quick Reset</div>
-            <div id="zen-checkin-desc" class="zen-checkin-desc">Grab some water before continuing.</div>
-            <div class="zen-pause-actions">
-              <button id="zen-checkin-accept-btn" class="zen-btn zen-btn-primary">Took Reset</button>
-              <button id="zen-checkin-dismiss-btn" class="zen-btn">Later</button>
-            </div>
-          </div>
-
-          <!-- Zen Controls -->
-          <div class="zen-controls-row">
-            <button id="zen-btn-pause" class="zen-btn">⏸ Pause Focus</button>
-            <button id="zen-btn-resume" class="zen-btn zen-btn-primary" style="display: none;">▶ Resume Focus</button>
-            <button id="zen-btn-camera-toggle" class="zen-btn zen-btn-camera">📷 Open Camera (OpenCV)</button>
-            <button id="zen-btn-stop" class="zen-btn">⏹ End Session</button>
-            <button id="zen-btn-exit" class="zen-btn">Workspace View</button>
-          </div>
-
-          <!-- Dedicated Zen Vision HUD (OpenCV.js Presence & Touchless Gestures) -->
-          <div id="zen-camera-hud" class="zen-camera-hud" style="display: none;">
-            <div class="zen-camera-hud-header">
-              <div class="zen-camera-hud-title">
-                <span class="live-dot"></span>
-                <span>OPENCV.JS VISION STREAM</span>
-                <span id="zen-camera-mode-badge" class="hud-badge badge-hardware">HARDWARE WEBCAM</span>
-              </div>
-              <div class="zen-camera-hud-security">
-                🔒 ZERO CLOUD UPLOAD • 100% ON-DEVICE
+            <!-- Primary Big Focus Timer on Left -->
+            <div class="zen-timer-display-box">
+              <div id="zen-timer-huge" class="zen-timer-huge">00:00</div>
+              <div id="zen-flow-banner" class="zen-flow-banner">
+                <span class="flow-dot"></span>
+                <span id="zen-flow-status-text">Flow protected — JOT is staying quiet</span>
               </div>
             </div>
 
-            <div class="zen-camera-hud-body">
-              <!-- Camera Preview Viewport -->
-              <div class="zen-camera-viewport">
-                <div id="zen-camera-preview-container" class="zen-camera-preview-box">
-                  <!-- Live video element or simulated radar mounted dynamically -->
+            <!-- Natural Pause Proposal Card (When absence detected) -->
+            <div id="zen-pause-card" class="zen-pause-card">
+              <div class="zen-pause-title">Possible Pause Detected</div>
+              <div class="zen-pause-desc">Looks like you stepped away. Pause DBMS?</div>
+              <div class="zen-pause-actions">
+                <button id="zen-pause-confirm-btn" class="zen-btn zen-btn-primary">Pause DBMS</button>
+                <button id="zen-pause-dismiss-btn" class="zen-btn">Keep Working</button>
+              </div>
+            </div>
+
+            <!-- Gentle Check-in Card -->
+            <div id="zen-checkin-card" class="zen-checkin-card">
+              <div id="zen-checkin-title" class="zen-checkin-title">💧 Quick Reset</div>
+              <div id="zen-checkin-desc" class="zen-checkin-desc">Grab some water before continuing.</div>
+              <div class="zen-pause-actions">
+                <button id="zen-checkin-accept-btn" class="zen-btn zen-btn-primary">Took Reset</button>
+                <button id="zen-checkin-dismiss-btn" class="zen-btn">Later</button>
+              </div>
+            </div>
+
+            <!-- Zen Controls Row -->
+            <div class="zen-controls-row">
+              <button id="zen-btn-pause" class="zen-btn">⏸ Pause Focus</button>
+              <button id="zen-btn-resume" class="zen-btn zen-btn-primary" style="display: none;">▶ Resume Focus</button>
+              <button id="zen-btn-camera-toggle" class="zen-btn zen-btn-camera">📷 Open Camera (OpenCV)</button>
+              <button id="zen-btn-stop" class="zen-btn">⏹ End Session</button>
+              <button id="zen-btn-exit" class="zen-btn">Workspace View</button>
+            </div>
+          </div>
+
+          <!-- RIGHT BAY: Unified Focus Vision Monitor (50% equal space) -->
+          <div class="zen-bay zen-bay-right">
+            <div id="zen-vision-monitor" class="zen-vision-monitor camera-off">
+              <!-- Top Monitor Bar -->
+              <div class="zen-monitor-header">
+                <div class="zen-monitor-badge-group">
+                  <span id="zen-monitor-status-dot" class="monitor-dot"></span>
+                  <span id="zen-monitor-title" class="monitor-title">FOCUS VISION MONITOR</span>
+                  <span id="zen-camera-mode-badge" class="hud-badge badge-standby">CAMERA OFF</span>
                 </div>
-                <div class="zen-camera-overlay-reticle">
+                <div class="zen-camera-hud-security">
+                  🔒 ZERO CLOUD UPLOAD • 100% ON-DEVICE
+                </div>
+              </div>
+
+              <!-- Main Viewport Window -->
+              <div class="zen-monitor-viewport">
+                <!-- Live Video Container (Active when camera is ON) -->
+                <div id="zen-camera-preview-container" class="zen-camera-preview-box">
+                  <!-- Video mounted dynamically when camera is on -->
+                </div>
+
+                <!-- Solid Background Standby Slate (Active when camera is OFF) -->
+                <div id="zen-camera-standby-slate" class="zen-camera-standby-slate">
+                  <div class="standby-ambient-grid"></div>
+                  <div class="standby-content">
+                    <div class="standby-aperture-icon">📷</div>
+                    <div class="standby-title">Optical Presence Standby</div>
+                    <p class="standby-desc">Camera is off by default to protect your privacy. Zero background surveillance.</p>
+                    <button id="zen-standby-open-cam-btn" class="zen-btn zen-btn-primary" style="margin-top: 10px;">
+                      📷 Activate Camera & OpenCV
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Tactical Overlay (Always present: reticles, in-feed timer, gesture prompt) -->
+                <div class="zen-monitor-overlay">
                   <div class="reticle-corner top-left"></div>
                   <div class="reticle-corner top-right"></div>
                   <div class="reticle-corner bottom-left"></div>
                   <div class="reticle-corner bottom-right"></div>
-                  <div id="zen-gesture-zone-hint" class="gesture-zone-hint">
-                    🖐️ Wave hand here to Pause / Resume
+
+                  <!-- Seamless In-Feed HUD Timer -->
+                  <div class="zen-infeed-timer-pill">
+                    <span class="infeed-timer-label">SESSION TIME</span>
+                    <span id="zen-infeed-timer-display" class="infeed-timer-digits">00:00</span>
+                  </div>
+
+                  <!-- Gesture Zone Prompt (Shown when camera is active) -->
+                  <div id="zen-gesture-zone-hint" class="gesture-zone-hint" style="display: none;">
+                    🖐️ Wave hand in upper frame to Pause / Resume
                   </div>
                 </div>
               </div>
 
-              <!-- Live Telemetry & Control Panel -->
-              <div class="zen-camera-telemetry">
-                <div class="telemetry-item">
-                  <span class="telemetry-label">Vision Engine:</span>
-                  <span id="zen-hud-engine-val" class="telemetry-val">OpenCV.js (WebAssembly)</span>
-                </div>
-                <div class="telemetry-item">
-                  <span class="telemetry-label">Presence Status:</span>
-                  <span id="zen-hud-presence-val" class="telemetry-val text-success">PRESENT (95%)</span>
-                </div>
-                <div class="telemetry-item">
-                  <span class="telemetry-label">Motion Activity:</span>
-                  <span id="zen-hud-motion-val" class="telemetry-val">Focused Motion</span>
-                </div>
-                <div class="telemetry-item">
-                  <span class="telemetry-label">Touchless Control:</span>
-                  <span id="zen-hud-gesture-val" class="telemetry-val">ACTIVE (Pause / Resume)</span>
+              <!-- Monitor Telemetry & Quick Action Bar -->
+              <div class="zen-monitor-footer">
+                <div class="zen-camera-telemetry">
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Vision Engine:</span>
+                    <span id="zen-hud-engine-val" class="telemetry-val">OpenCV.js (WebAssembly)</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Presence Status:</span>
+                    <span id="zen-hud-presence-val" class="telemetry-val text-success">STANDBY</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Optical Delta:</span>
+                    <span id="zen-hud-motion-val" class="telemetry-val">Standby (0.0%)</span>
+                  </div>
+                  <div class="telemetry-item">
+                    <span class="telemetry-label">Touchless Control:</span>
+                    <span id="zen-hud-gesture-val" class="telemetry-val">ACTIVE (Pause / Resume)</span>
+                  </div>
                 </div>
 
-                <div class="zen-camera-hud-actions">
+                <div id="zen-camera-active-actions" class="zen-camera-hud-actions" style="display: none;">
                   <button id="zen-btn-close-cam" class="zen-btn" style="padding: 6px 14px; font-size: 11px;">
                     ❌ Turn Off Camera
                   </button>
@@ -259,8 +295,11 @@
                   </button>
                 </div>
               </div>
+
             </div>
           </div>
+
+        </div>
 
           <!-- Live Sensor Telemetry Strip (Local only, zero frames stored) -->
           <div class="zen-sensor-status-bar">
