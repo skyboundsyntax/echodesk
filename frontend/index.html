@@ -196,8 +196,70 @@
           <div class="zen-controls-row">
             <button id="zen-btn-pause" class="zen-btn">⏸ Pause Focus</button>
             <button id="zen-btn-resume" class="zen-btn zen-btn-primary" style="display: none;">▶ Resume Focus</button>
+            <button id="zen-btn-camera-toggle" class="zen-btn zen-btn-camera">📷 Open Camera (OpenCV)</button>
             <button id="zen-btn-stop" class="zen-btn">⏹ End Session</button>
             <button id="zen-btn-exit" class="zen-btn">Workspace View</button>
+          </div>
+
+          <!-- Dedicated Zen Vision HUD (OpenCV.js Presence & Touchless Gestures) -->
+          <div id="zen-camera-hud" class="zen-camera-hud" style="display: none;">
+            <div class="zen-camera-hud-header">
+              <div class="zen-camera-hud-title">
+                <span class="live-dot"></span>
+                <span>OPENCV.JS VISION STREAM</span>
+                <span id="zen-camera-mode-badge" class="hud-badge badge-hardware">HARDWARE WEBCAM</span>
+              </div>
+              <div class="zen-camera-hud-security">
+                🔒 ZERO CLOUD UPLOAD • 100% ON-DEVICE
+              </div>
+            </div>
+
+            <div class="zen-camera-hud-body">
+              <!-- Camera Preview Viewport -->
+              <div class="zen-camera-viewport">
+                <div id="zen-camera-preview-container" class="zen-camera-preview-box">
+                  <!-- Live video element or simulated radar mounted dynamically -->
+                </div>
+                <div class="zen-camera-overlay-reticle">
+                  <div class="reticle-corner top-left"></div>
+                  <div class="reticle-corner top-right"></div>
+                  <div class="reticle-corner bottom-left"></div>
+                  <div class="reticle-corner bottom-right"></div>
+                  <div id="zen-gesture-zone-hint" class="gesture-zone-hint">
+                    🖐️ Wave hand here to Pause / Resume
+                  </div>
+                </div>
+              </div>
+
+              <!-- Live Telemetry & Control Panel -->
+              <div class="zen-camera-telemetry">
+                <div class="telemetry-item">
+                  <span class="telemetry-label">Vision Engine:</span>
+                  <span id="zen-hud-engine-val" class="telemetry-val">OpenCV.js (WebAssembly)</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="telemetry-label">Presence Status:</span>
+                  <span id="zen-hud-presence-val" class="telemetry-val text-success">PRESENT (95%)</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="telemetry-label">Motion Activity:</span>
+                  <span id="zen-hud-motion-val" class="telemetry-val">Focused Motion</span>
+                </div>
+                <div class="telemetry-item">
+                  <span class="telemetry-label">Touchless Control:</span>
+                  <span id="zen-hud-gesture-val" class="telemetry-val">ACTIVE (Pause / Resume)</span>
+                </div>
+
+                <div class="zen-camera-hud-actions">
+                  <button id="zen-btn-close-cam" class="zen-btn" style="padding: 6px 14px; font-size: 11px;">
+                    ❌ Turn Off Camera
+                  </button>
+                  <button id="zen-btn-switch-source" class="zen-btn" style="padding: 6px 14px; font-size: 11px;">
+                    🔄 Switch to Simulation
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Live Sensor Telemetry Strip (Local only, zero frames stored) -->
